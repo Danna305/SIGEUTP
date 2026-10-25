@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plantilla · SIGEP UTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/sigep.css">
+</head>
+  <!-- data-modulo cambia el color de acento: 1 rosa, 2 azul, 3 verde, 4 ámbar -->
+<body data-modulo="1">
+<div class="shell">
+  <!-- MENÚ LATERAL: igual en los 4 módulos; solo cambian las opciones -->
+  <aside class="side">
+    <div class="side-head"><a class="logo" href="index.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
+    <div class="module-pill"><span class="n">1</span><span><small>Módulo 1</small>Nombre corto del módulo</span></div>
+    <div class="side-label">Menú</div>
+    <nav class="side-nav">
+        <a href="#" aria-current="page"><i data-ic="grid"></i>Opción 1</a>
+        <a href="#"><i data-ic="users"></i>Opción 2<span class="count">5</span></a>
+        <a href="#"><i data-ic="folder"></i>Opción 3</a>
+    </nav>
+    <div class="side-foot">
+      <a href="index.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
+      <button class="side-out"><i data-ic="logout"></i>Cerrar sesión</button>
+    </div>
+  </aside>
+  <div class="scrim"></div>
+  <div class="main">
+  <!-- BARRA SUPERIOR: ruta de la página, notificaciones y usuario -->
+    <header class="topbar">
+      <button class="burger" aria-label="Abrir menú"><i data-ic="menu"></i></button>
+      <div class="crumb">SIGEP UTP / Módulo 1 / <b>Título de la página</b></div>
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notificaciones"><i data-ic="bell"></i><span class="dot">3</span></button>
+        <span class="avatar">AB</span>
+      </div>
+    </header>
+  <!-- CONTENIDO: aquí va lo propio de cada módulo -->
+    <main class="content">
+      <div class="page-h"><div><h1>Título de la página</h1><p class="sub">Descripción corta de lo que se ve aquí</p></div><a class="btn" href="#"><i data-ic="plus"></i>Acción principal</a></div>
+      <div class="stats">
+        <div class="stat"><span class="ic-box"><i data-ic="file"></i></span><b>0</b><span>Indicador 1</span></div>
+        <div class="stat"><span class="ic-box"><i data-ic="checkCircle"></i></span><b>0</b><span>Indicador 2</span></div>
+        <div class="stat"><span class="ic-box"><i data-ic="clock"></i></span><b>0</b><span>Indicador 3</span></div>
+        <div class="stat"><span class="ic-box"><i data-ic="alert"></i></span><b>0</b><span>Indicador 4</span></div>
+      </div>
+      <div class="card"><div class="card-h"><h2>Título de la tarjeta</h2><a class="btn out sm" href="#">Ver todo</a></div>
+        <p class="muted">Aquí va el contenido de tu módulo: tablas (.table-wrap + .tbl), listas (.rows), formularios (.field) o pestañas (.tabs).</p>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="js/sigep.js"></script>
+</body>
+</html>
