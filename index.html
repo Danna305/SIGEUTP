@@ -26,7 +26,7 @@
   .facts svg.i{color:#7FA6FF}
   .mods{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:-60px}
   .mod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px -18px rgba(15,27,51,.35)}
-  .mod-top{background:var(--acento-soft);padding:18px;display:flex;gap:12px;align-items:center}
+  .mod-top{background:var(--acento-soft);padding:18px;display:flex;gap:12px;align-items:center;min-height:92px}
   .mod-n{width:40px;height:40px;border-radius:50%;background:var(--acento);color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.1rem;flex:none}
   .mod-top small{display:block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--acento)}
   .mod-top h3{font-size:1.02rem;font-weight:700;color:var(--text)}
@@ -58,7 +58,7 @@
 <header class="p-head">
   <div class="wrap">
     <a class="logo" href="#"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Sistema de Gestión de Estadías</small></span></a>
-    <nav class="p-nav"><a href="#modulos">Módulos</a><a href="#arquitectura">Arquitectura</a><a href="#beneficios">Beneficios</a></nav>
+    <nav class="p-nav"><a href="#modulos">Módulos</a><a href="#beneficios">¿Por qué SIGEP?</a></nav>
   </div>
 </header>
 
@@ -66,87 +66,60 @@
   <div class="wrap">
     <span class="eyebrow">Universidad Tecnológica de Puebla · Estadías profesionales</span>
     <h1>Todo el proceso de estadías en un solo sistema</h1>
-    <p>Alumnos, asesores y coordinación trabajan en la misma plataforma: expedientes digitales, asignación de asesores, seguimiento académico y un portal móvil para el alumno.</p>
+    <p>Alumnos, asesores y coordinación en una misma plataforma, desde la computadora o el celular.</p>
     <div class="facts">
-      <span><i data-ic="layers"></i>4 módulos integrados</span>
-      <span><i data-ic="database"></i>Una sola base de datos</span>
-      <span><i data-ic="smartphone"></i>Aplicación web progresiva: se instala y funciona sin conexión</span>
+      <span><i data-ic="layers"></i>4 módulos</span>
+            <span><i data-ic="smartphone"></i>Se instala en tu celular</span>
     </div>
   </div>
 </section>
 
-<!-- MÓDULOS: cambia cada href="..." por la dirección real del módulo de cada integrante -->
+<!-- MÓDULOS: cambia el href de cada botón "Entrar" por la dirección real de cada módulo -->
 <main class="wrap" id="modulos">
   <div class="mods">
     <article class="mod" data-modulo="1">
-      <div class="mod-top"><span class="mod-n">1</span><div><small>Módulo 1</small><h3>Expediente digital y gestión de documentos</h3></div></div>
+      <div class="mod-top"><span class="mod-n">1</span><div><small>Módulo 1</small><h3>Expediente digital</h3></div></div>
       <div class="mod-body">
-        <p class="small">Digitalizar la entrega y el seguimiento de los documentos requeridos para completar la estadía.</p>
-        <h4>Funcionalidades</h4>
-        <ul><li>Expediente digital por alumno</li><li>Carga y validación de archivos PDF</li><li>Estados: pendiente, en revisión, aprobado</li><li>Corrección, reenvío y observaciones</li><li>Historial de versiones</li></ul>
-        <h4>Tablas</h4>
-        <div class="tablas"><span>expedientes</span><span>tipos_documento</span><span>documentos</span><span>revisiones_documento</span><span>historial_documentos</span></div>
+        <p class="small">Entrega tus documentos de estadía en línea, sin papel.</p>
+        <ul><li>Sube tus documentos en PDF</li><li>Consulta si ya fueron aprobados</li><li>Corrige y reenvía cuando se pida</li></ul>
       </div>
-      <div class="mod-foot"><span>Integrante 1</span><a class="btn sm" href="ejemplos/modulo-1.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
+      <div class="mod-foot"><span>Para alumnos</span><a class="btn sm" href="ejemplos/modulo-1.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
     </article>
 
     <article class="mod" data-modulo="2">
-      <div class="mod-top"><span class="mod-n">2</span><div><small>Módulo 2</small><h3>Administración y gestión académica</h3></div></div>
+      <div class="mod-top"><span class="mod-n">2</span><div><small>Módulo 2</small><h3>Administración académica</h3></div></div>
       <div class="mod-body">
-        <p class="small">Centralizar el control de estudiantes, asesores, empresas y periodos de estadías.</p>
-        <h4>Funcionalidades</h4>
-        <ul><li>Alumnos, asesores y periodos</li><li>Asignación individual, masiva o automática</li><li>Empresas y contactos</li><li>Filtros, búsquedas y estadísticas</li><li>Usuarios y permisos</li></ul>
-        <h4>Tablas</h4>
-        <div class="tablas"><span>usuarios</span><span>roles</span><span>alumnos</span><span>asesores</span><span>periodos</span><span>asignaciones_asesor</span><span>empresas</span><span>contactos_empresa</span></div>
+        <p class="small">Organiza alumnos, asesores, empresas y periodos.</p>
+        <ul><li>Registro de alumnos y asesores</li><li>Asignación de asesores</li><li>Empresas con convenio</li></ul>
       </div>
-      <div class="mod-foot"><span>Danna Cruz</span><a class="btn sm" href="ejemplos/modulo-2.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
+      <div class="mod-foot"><span>Para coordinación</span><a class="btn sm" href="ejemplos/modulo-2.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
     </article>
 
     <article class="mod" data-modulo="3">
-      <div class="mod-top"><span class="mod-n">3</span><div><small>Módulo 3</small><h3>Seguimiento académico y revisión de estadías</h3></div></div>
+      <div class="mod-top"><span class="mod-n">3</span><div><small>Módulo 3</small><h3>Seguimiento académico</h3></div></div>
       <div class="mod-body">
-        <p class="small">Que los asesores supervisen el avance de sus alumnos y den seguimiento a sus entregas.</p>
-        <h4>Funcionalidades</h4>
-        <ul><li>Lista de alumnos asignados</li><li>Revisión y aprobación de documentos</li><li>Observaciones y retroalimentación</li><li>Avance por etapas</li><li>Citas de asesoría</li></ul>
-        <h4>Tablas</h4>
-        <div class="tablas"><span>etapas_estadia</span><span>seguimiento_estadia</span><span>observaciones</span><span>entregas_academicas</span><span>revisiones_academicas</span><span>citas_asesoria</span></div>
+        <p class="small">Acompaña el avance de cada alumno durante su estadía.</p>
+        <ul><li>Revisión de entregas</li><li>Observaciones al alumno</li><li>Citas de asesoría</li></ul>
       </div>
-      <div class="mod-foot"><span>Integrante 3</span><a class="btn sm" href="ejemplos/modulo-3.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
+      <div class="mod-foot"><span>Para asesores</span><a class="btn sm" href="ejemplos/modulo-3.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
     </article>
 
     <article class="mod" data-modulo="4">
-      <div class="mod-top"><span class="mod-n">4</span><div><small>Módulo 4</small><h3>Portal del alumno y acceso móvil</h3></div></div>
+      <div class="mod-top"><span class="mod-n">4</span><div><small>Módulo 4</small><h3>Portal del alumno</h3></div></div>
       <div class="mod-body">
-        <p class="small">Un punto de acceso sencillo para que el alumno consulte su estadía desde computadora o celular.</p>
-        <h4>Funcionalidades</h4>
-        <ul><li>Inicio de sesión institucional</li><li>Dashboard personalizado</li><li>Estado de la estadía y documentos</li><li>Datos del asesor y la empresa</li><li>Avisos y notificaciones</li></ul>
-        <h4>Tablas</h4>
-        <div class="tablas"><span>preferencias_usuario</span><span>notificaciones</span><span>avisos</span><span>destinatarios_aviso</span><span>sesiones</span></div>
+        <p class="small">Consulta tu estadía desde la computadora o el celular.</p>
+        <ul><li>Tu avance en un vistazo</li><li>Datos de tu asesor y empresa</li><li>Avisos importantes</li></ul>
       </div>
-      <div class="mod-foot"><span>Integrante 4</span><a class="btn sm" href="ejemplos/modulo-4.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
+      <div class="mod-foot"><span>Para alumnos</span><a class="btn sm" href="ejemplos/modulo-4.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
     </article>
   </div>
 
-  <section class="sec" id="arquitectura">
-    <h2>Arquitectura general</h2>
-    <p class="sub">Los cuatro módulos comparten el mismo diseño, el mismo inicio de sesión y una sola base de datos.</p>
-    <div class="arq">
-      <div class="card"><span class="ic-box"><i data-ic="grid"></i></span><b>Frontend web</b><span>Aplicación web progresiva con el diseño común SIGEP.</span></div>
-      <div class="card"><span class="ic-box"><i data-ic="smartphone"></i></span><b>Aplicación móvil</b><span>Se instala desde el navegador en Android y iPhone.</span></div>
-      <div class="card"><span class="ic-box"><i data-ic="layers"></i></span><b>Backend</b><span>API REST que atiende a los cuatro módulos.</span></div>
-      <div class="card"><span class="ic-box"><i data-ic="database"></i></span><b>Base de datos</b><span>Una sola base compartida por todo el sistema.</span></div>
-    </div>
-  </section>
-
   <section class="sec" id="beneficios">
-    <h2>Beneficios del proyecto</h2>
+    <h2>¿Por qué SIGEP?</h2>
     <div class="ben">
       <div class="card"><span class="ic-box"><i data-ic="folder"></i></span><div><b>Menos papel</b><span>Los documentos se entregan y revisan en línea.</span></div></div>
-      <div class="card"><span class="ic-box"><i data-ic="message"></i></span><div><b>Mejor comunicación</b><span>Alumnos, asesores y coordinación en un mismo lugar.</span></div></div>
       <div class="card"><span class="ic-box"><i data-ic="clock"></i></span><div><b>Seguimiento en tiempo real</b><span>El avance de cada alumno siempre está actualizado.</span></div></div>
       <div class="card"><span class="ic-box"><i data-ic="smartphone"></i></span><div><b>Acceso desde cualquier lugar</b><span>Funciona en computadora y celular.</span></div></div>
-      <div class="card"><span class="ic-box"><i data-ic="shield"></i></span><div><b>Información segura</b><span>Cada usuario ve solo lo que le corresponde.</span></div></div>
-      <div class="card"><span class="ic-box"><i data-ic="layers"></i></span><div><b>Todo centralizado</b><span>Un solo sistema para todo el proceso de estadías.</span></div></div>
     </div>
   </section>
 </main>
