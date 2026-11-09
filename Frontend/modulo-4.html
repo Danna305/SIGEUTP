@@ -3,27 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Inicio · Módulo 4 · SIGEP UTP</title>
+<title>Portal del alumno · Módulo 4 · SIGEP UTP</title>
+<meta name="description" content="Portal del alumno del SIGEP UTP: consulta el dictamen, el checklist y las observaciones de tu tesina sincronizadas por tu asesor.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="../css/sigep.css">
+<link rel="stylesheet" href="../css/preauditoria.css">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="../img/icon-192.png">
+<meta name="theme-color" content="#0056b3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SIGEP UTP">
+<link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png">
 </head>
-<body data-modulo="4">
+<body data-modulo="4" data-rol="alumno">
 <div class="shell">
   <aside class="side">
     <div class="side-head"><a class="logo" href="../index.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
     <div class="module-pill"><span class="n">4</span><span><small>Módulo 4</small>Portal del alumno</span></div>
     <div class="side-label">Menú</div>
     <nav class="side-nav">
-        <a href="#" aria-current="page"><i data-ic="home"></i>Inicio</a>
-        <a href="#"><i data-ic="folder"></i>Mis documentos</a>
-        <a href="#"><i data-ic="userCheck"></i>Mi asesor</a>
-        <a href="#"><i data-ic="building"></i>Mi empresa</a>
-        <a href="#"><i data-ic="bell"></i>Avisos<span class="count alert">2</span></a>
-        <a href="#"><i data-ic="user"></i>Mi perfil</a>
+      <a href="#" aria-current="page"><i data-ic="home"></i>Inicio</a>
+      <a href="#preauditoria"><i data-ic="clipboard"></i>Mi tesina</a>
+      <a href="#observaciones"><i data-ic="message"></i>Observaciones</a>
+      <a href="#citas"><i data-ic="calendar"></i>Mis citas</a>
+      <a href="#notificaciones"><i data-ic="bell"></i>Avisos<span class="count alert" id="pa-nav-obs" hidden>0</span></a>
+      <a href="#"><i data-ic="userCheck"></i>Mi asesor</a>
+      <a href="#"><i data-ic="user"></i>Mi perfil</a>
     </nav>
     <div class="side-foot">
-      <a href="../index.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
       <button class="side-out"><i data-ic="logout"></i>Cerrar sesión</button>
     </div>
   </aside>
@@ -33,33 +42,110 @@
       <button class="burger" aria-label="Abrir menú"><i data-ic="menu"></i></button>
       <div class="crumb">SIGEP UTP / Módulo 4 / <b>Inicio</b></div>
       <div class="top-actions">
-        <button class="icon-btn" aria-label="Notificaciones"><i data-ic="bell"></i><span class="dot">3</span></button>
-        <span class="avatar">AL</span>
+        <div class="notif-wrap">
+          <button class="icon-btn" id="btn-notificaciones" type="button" aria-label="Notificaciones" aria-expanded="false" aria-controls="panel-notificaciones"><i data-ic="bell"></i><span class="dot" id="notif-badge" hidden>0</span></button>
+          <div class="notif-panel d-none" id="panel-notificaciones" role="dialog" aria-label="Notificaciones">
+            <div class="notif-head"><b>Notificaciones</b><button class="notif-action" type="button" data-notif-leer-todas>Marcar todas como leídas</button></div>
+            <div class="notif-list" id="notif-lista"></div>
+          </div>
+        </div>
+        <details class="user-menu">
+          <summary class="user-menu-trigger" aria-label="Menú de usuario">
+            <span class="avatar" data-sesion-iniciales>AL</span>
+            <span class="user-menu-name" data-sesion-nombre>Alumno</span>
+            <i data-ic="chevD" data-s="16"></i>
+          </summary>
+          <div class="user-menu-pop">
+            <div class="user-menu-info">
+              <b data-sesion-nombre>Alumno</b>
+              <small data-sesion-correo>alumno@utp.edu.mx</small>
+              <span class="chip mod" data-sesion-rol>Alumno</span>
+            </div>
+            <button class="btn out sm user-menu-out" type="button" data-logout><i data-ic="logout"></i>Cerrar sesión</button>
+          </div>
+        </details>
       </div>
     </header>
     <main class="content">
-      <div class="page-h"><div><h1>¡Hola, Ana!</h1><p class="sub">Este es el estado de tu estadía · Semana 14 de 22</p></div><a class="btn" href="#"><i data-ic="upload"></i>Subir documento</a></div>
-      <div class="cols">
-        <div class="card" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
-          <div style="width:120px;height:120px;border-radius:50%;background:conic-gradient(var(--acento) 70%,var(--soft) 0);display:grid;place-items:center;flex:none"><div style="width:92px;height:92px;border-radius:50%;background:var(--surface);display:grid;place-items:center"><b style="font-size:1.6rem" class="num">70%</b></div></div>
-          <div class="stack" style="gap:8px"><h2 style="font-size:1rem">Mi progreso</h2><span><span class="chip ok">Aprobado</span> 3 documentos</span><span><span class="chip warn">En revisión</span> 1 documento</span><span><span class="chip ">Pendiente</span> 2 documentos</span></div>
+      <div class="page-h">
+        <div>
+          <h1>¡Hola, <span data-sesion-nombre>Alumno</span>!</h1>
+          <p class="sub">Revisa el dictamen, el checklist y las observaciones de tu tesina.</p>
         </div>
-        <div class="card"><div class="card-h"><h2>Acciones pendientes</h2><span class="chip mod">2</span></div>
-          <div class="rows">
-            <div class="r"><span class="ic-box" style="margin:0"><i data-ic="upload"></i></span><div class="grow"><b>Subir carta de presentación</b><small>Vence el 30 de abril</small></div><a class="btn sm" href="#">Subir</a></div>
-            <div class="r"><span class="ic-box" style="margin:0"><i data-ic="edit"></i></span><div class="grow"><b>Corregir plan de trabajo</b><small>Observación de tu asesor</small></div><a class="btn out sm" href="#">Ver</a></div>
+        <div class="pa-actions">
+          <button class="btn out" id="pa-alumno-sync" type="button"><i data-ic="history"></i>Sincronizar</button>
+          <button class="btn out" id="pa-activar-push" type="button"><i data-ic="bell"></i>Activar notificaciones</button>
+        </div>
+      </div>
+
+      <div class="pa-offline d-none" id="pa-offline" hidden><i data-ic="alert"></i><span>Sin conexión. El PDF y el checklist siguen disponibles; las notificaciones se actualizarán al recuperar la red.</span></div>
+
+      <div class="pa-alumno-info" id="pa-alumno-info">
+        <span class="avatar" id="pa-alumno-avatar">AL</span>
+        <div class="grow">
+          <b id="pa-alumno-nombre">Alumno</b>
+          <small id="pa-alumno-sub">Cargando información de la tesina...</small>
+        </div>
+        <span class="chip ok" id="pa-alumno-conexion">Sincronizado</span>
+      </div>
+
+      <div class="pa-mini-stats" style="margin-top:16px">
+        <div class="pa-mini-stat"><b id="pa-stat-total">0</b><span>Versiones</span></div>
+        <div class="pa-mini-stat"><b id="pa-stat-aprobadas">0</b><span>Aprobadas</span></div>
+        <div class="pa-mini-stat"><b id="pa-stat-correcciones">0</b><span>Con correcciones</span></div>
+        <div class="pa-mini-stat"><b id="pa-stat-pendientes">0</b><span>Pendientes</span></div>
+      </div>
+
+      <section id="preauditoria">
+        <div class="pa-version-tabs" id="pa-alumno-versiones" role="tablist" aria-label="Versiones de mi tesina"></div>
+
+        <div class="pa-workspace">
+          <div class="pa-panel pa-pdf-panel card">
+            <div class="card-h"><h2>Mi documento</h2><span class="chip" id="pa-alumno-estado">Pendiente</span></div>
+            <div class="pa-pdf-wrap"><iframe id="pa-alumno-pdf" title="Visor de PDF de mi tesina" loading="lazy"></iframe></div>
+            <div class="pa-pdf-foot"><span class="mono" id="pa-alumno-pdf-meta"></span><a class="btn out sm" id="pa-alumno-pdf-abrir" href="#" target="_blank" rel="noopener"><i data-ic="download"></i>Abrir PDF</a></div>
+          </div>
+
+          <aside class="pa-panel card">
+            <div class="card-h"><h2>Dictamen de mi asesor</h2><span class="chip" id="pa-alumno-dictamen-chip">Pendiente</span></div>
+            <div class="pa-status-banner" id="pa-alumno-banner"><i data-ic="clock"></i><div><b>Pendiente de revisión</b><span>Tu asesor aún no emite el dictamen final de esta versión.</span></div></div>
+            <p class="small muted" style="margin-bottom:6px">Observaciones de mi asesor</p>
+            <div class="pa-observaciones-box vacia" id="pa-alumno-observaciones">Sin observaciones por ahora.</div>
+            <p class="mono" id="pa-alumno-actualizado"></p>
+          </aside>
+        </div>
+
+        <div class="pa-workspace pa-workspace-bottom">
+          <div class="pa-panel card">
+            <div class="card-h"><h2>Checklist de criterios</h2><span class="chip mod" id="pa-alumno-progreso">0 de 0</span></div>
+            <div class="pa-checklist" id="pa-alumno-checklist"></div>
+          </div>
+
+          <div class="pa-panel card" id="notificaciones">
+            <div class="card-h"><h2>Notificaciones</h2><span class="chip mod">Avisos</span></div>
+            <div class="pa-notif-list" id="pa-alumno-notificaciones"></div>
           </div>
         </div>
-      </div>
-      <div class="tiles" style="margin-top:16px">
-        <a class="tile" href="#"><span class="ic-box" style="margin:0"><i data-ic="folder"></i></span>Mis documentos</a>
-        <a class="tile" href="#"><span class="ic-box" style="margin:0"><i data-ic="userCheck"></i></span>Mi asesor</a>
-        <a class="tile" href="#"><span class="ic-box" style="margin:0"><i data-ic="building"></i></span>Mi empresa</a>
-        <a class="tile" href="#"><span class="ic-box" style="margin:0"><i data-ic="bell"></i></span>Avisos</a>
-      </div>
+      </section>
+
+      <section class="pa-section" id="observaciones">
+        <div class="page-h"><div><h1>Observaciones por versión</h1><p class="sub">Consulta el detalle de cada dictamen emitido por tu asesor.</p></div></div>
+        <div class="pa-obs-list" id="pa-alumno-observaciones-lista"></div>
+      </section>
+
+      <section class="pa-section" id="citas">
+        <div class="page-h"><div><h1>Mis citas de asesoría</h1><p class="sub">Consultas programadas con tu asesor.</p></div></div>
+        <div class="card">
+          <div class="card-h"><h2>Próximas citas</h2><span class="chip mod" id="pa-alumno-citas-count">0</span></div>
+          <div class="rows" id="pa-alumno-citas"><div class="pa-empty">Sin citas programadas.</div></div>
+        </div>
+      </section>
     </main>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/sigep.js"></script>
+<script src="../js/sync.js"></script>
+<script src="../js/preauditoria.js"></script>
 </body>
 </html>

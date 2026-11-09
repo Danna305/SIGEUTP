@@ -30,6 +30,11 @@ const P = {
   trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  expand: '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
+  mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>',
+  micOff: '<line x1="2" y1="2" x2="22" y2="22"/><path d="M18.89 13.23A7 7 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><line x1="12" y1="19" x2="12" y2="22"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
   filter: '<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
@@ -47,12 +52,15 @@ const P = {
   message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
   home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
   eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   arrowL: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
   arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
   history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>',
   clipboard: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
 };
 const ic = (n, s = 18) => `<svg class="i" viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true">${P[n] || ''}</svg>`;
+window.ic = ic;
 function pintarIconos(raiz = document) {
   raiz.querySelectorAll('i[data-ic]').forEach((e) => { e.outerHTML = ic(e.dataset.ic, Number(e.dataset.s) || 18); });
 }
@@ -74,4 +82,187 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tabla) tabla.querySelectorAll('tbody tr').forEach((tr) => { tr.hidden = !!f && tr.dataset.estado !== f; });
     });
   });
+  const CLAVES_SESION = ['sigep-user-id', 'sigep-nombre', 'sigep-correo', 'sigep-rol', 'sigep-login', 'sigep_sesion'];
+
+  function sesionLocal() {
+    try {
+      if (window.SIGEPAuth && typeof window.SIGEPAuth.sesionActual === 'function') {
+        const sesion = window.SIGEPAuth.sesionActual();
+        if (sesion) return sesion;
+      }
+      const guardada = JSON.parse(localStorage.getItem('sigep_sesion') || 'null');
+      const rol = (guardada && guardada.rol) || localStorage.getItem('sigep-rol');
+      if (!rol) return null;
+      return {
+        rol,
+        correo: (guardada && guardada.correo) || localStorage.getItem('sigep-correo') || '',
+        nombre: (guardada && guardada.nombre) || localStorage.getItem('sigep-nombre') || '',
+        userId: (guardada && (guardada.userId || guardada.id)) || localStorage.getItem('sigep-user-id') || ''
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function inicialesDe(nombre) {
+    return String(nombre || '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((parte) => parte[0])
+      .join('')
+      .toUpperCase() || 'US';
+  }
+
+  function pintarSesion() {
+    const sesion = sesionLocal();
+    if (!sesion) return;
+    const nombre = sesion.nombre || 'Usuario';
+    const rol = sesion.rol === 'asesor' ? 'Asesor' : sesion.rol === 'alumno' ? 'Alumno' : (sesion.rol || '');
+    document.querySelectorAll('[data-sesion-nombre]').forEach((elemento) => { elemento.textContent = nombre; });
+    document.querySelectorAll('[data-sesion-correo]').forEach((elemento) => { elemento.textContent = sesion.correo || ''; });
+    document.querySelectorAll('[data-sesion-rol]').forEach((elemento) => { elemento.textContent = rol; });
+    document.querySelectorAll('[data-sesion-iniciales]').forEach((elemento) => { elemento.textContent = inicialesDe(nombre); });
+  }
+
+  function limpiarSesionLocal() {
+    CLAVES_SESION.forEach((clave) => {
+      try {
+        localStorage.removeItem(clave);
+      } catch (error) {
+        /* almacenamiento no disponible */
+      }
+    });
+  }
+
+  function irAlLogin() {
+    const manifest = document.querySelector('link[rel="manifest"]');
+    const controlador = navigator.serviceWorker && navigator.serviceWorker.controller;
+    const raiz = manifest ? new URL('./', manifest.href)
+      : controlador ? new URL('./', controlador.scriptURL)
+      : new URL('./', document.baseURI);
+    window.location.href = new URL('Frontend/login.html', raiz).href;
+  }
+
+  async function cerrarSesion() {
+    try {
+      if (window.SIGEPAuth && typeof window.SIGEPAuth.cerrarSesion === 'function') {
+        await window.SIGEPAuth.cerrarSesion();
+      }
+    } catch (error) {
+      console.warn('[SIGEP] No se pudo cerrar la sesión:', error);
+    }
+    limpiarSesionLocal();
+    irAlLogin();
+  }
+
+  document.querySelectorAll('.side-out, [data-logout]').forEach((boton) => {
+    boton.addEventListener('click', cerrarSesion);
+  });
+
+  pintarSesion();
 });
+
+/* =====================================================================
+   Panel de notificaciones de la barra superior
+   ===================================================================== */
+(function panelNotificaciones() {
+  function iniciar() {
+    const boton = document.getElementById('btn-notificaciones');
+    const panel = document.getElementById('panel-notificaciones');
+    if (!boton || !panel) return;
+
+    const cerrar = () => {
+      panel.classList.add('d-none');
+      boton.setAttribute('aria-expanded', 'false');
+    };
+
+    const abrir = () => {
+      panel.classList.remove('d-none');
+      boton.setAttribute('aria-expanded', 'true');
+      document.dispatchEvent(new CustomEvent('sigep:notificaciones-abrir'));
+    };
+
+    boton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (panel.classList.contains('d-none')) abrir();
+      else cerrar();
+    });
+
+    document.addEventListener('click', (event) => {
+      if (panel.classList.contains('d-none')) return;
+      if (panel.contains(event.target) || boton.contains(event.target)) return;
+      cerrar();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') cerrar();
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar, { once: true });
+  else iniciar();
+})();
+
+/* =====================================================================
+   PWA · Registro global del Service Worker
+   Se ejecuta en cualquier página que cargue sigep.js (index, login,
+   módulos y ejemplos) para que la app sea instalable y funcione offline.
+   ===================================================================== */
+(function registrarServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+
+  const actual = document.currentScript;
+  let swUrl;
+  try {
+    swUrl = actual ? new URL('../sw.js', actual.src) : new URL('sw.js', new URL('./', location.href));
+  } catch (error) {
+    swUrl = new URL('sw.js', new URL('./', location.href));
+  }
+
+  const registrar = () => {
+    navigator.serviceWorker.register(swUrl.href).catch((error) => {
+      console.warn('[SIGEP] No se pudo registrar el Service Worker:', error);
+    });
+  };
+
+  registrar();
+})();
+
+/* =====================================================================
+   PWA · Prompt de instalación
+   Cualquier elemento con [data-instalar-pwa] abre el diálogo nativo.
+   ===================================================================== */
+(function instalarPWA() {
+  let prompt = null;
+
+  window.SIGEP_PWA = {
+    get disponible() { return Boolean(prompt); },
+    async instalar() {
+      if (!prompt) return false;
+      prompt.prompt();
+      const resultado = await prompt.userChoice;
+      prompt = null;
+      document.querySelectorAll('[data-instalar-pwa]').forEach((boton) => { boton.hidden = true; });
+      return resultado.outcome === 'accepted';
+    }
+  };
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    prompt = event;
+    document.querySelectorAll('[data-instalar-pwa]').forEach((boton) => { boton.hidden = false; });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-instalar-pwa]').forEach((boton) => {
+      boton.hidden = true;
+      boton.addEventListener('click', () => window.SIGEP_PWA.instalar());
+    });
+  });
+
+  window.addEventListener('appinstalled', () => {
+    prompt = null;
+    document.querySelectorAll('[data-instalar-pwa]').forEach((boton) => { boton.hidden = true; });
+  });
+})();

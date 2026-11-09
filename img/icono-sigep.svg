@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SIGEP UTP">
+  <rect width="512" height="512" rx="112" fill="#059669"/>
+  <path d="M96 218 256 138l160 80-160 80-160-80Z" fill="#FFFFFF"/>
+  <path d="M144 258v76c48 32 176 32 224 0v-76l-112 56-112-56Z" fill="#FFFFFF" opacity=".92"/>
+  <path d="M416 218v96" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="416" cy="330" r="14" fill="#FFFFFF"/>
+</svg>

@@ -1,64 +1,66 @@
-# SIGEP UTP · Diseño común de los 4 módulos
+# SIGEP UTP · PWA de pre-auditoría y seguimiento académico
 
-Todos los módulos del Sistema de Gestión de Estadías usan el mismo menú lateral, la
-misma barra superior, los mismos colores y los mismos componentes. Cada integrante
-solo cambia el contenido de su propuesta y su número de módulo.
+Aplicación web progresiva (PWA) para la gestión de estadías de la Universidad Tecnológica de Puebla. Implementa el **Módulo 3 (asesor)** para pre-auditoría de tesinas y el **Módulo 4 (alumno)** para consulta de dictámenes, checklist, observaciones y citas.
 
+## Estructura
+
+```text
+SIGEUTP/
+├── index.html                 Splash y redirección por sesión
+├── offline.html               Respaldo offline del Service Worker
+├── manifest.webmanifest       Manifiesto PWA
+├── sw.js                      Service Worker (caché + sync + notificaciones)
+├── Frontend/
+│   ├── login.html             Inicio de sesión (Supabase + fallback offline)
+│   ├── modulo-3.html          Vista del asesor (pre-auditoría, checklist, dictamen, citas)
+│   └── modulo-4.html          Vista del alumno (documento, dictamen, checklist, avisos, citas)
+├── css/
+│   ├── sigep.css              Estilos base, layout responsivo y componentes comunes
+│   └── preauditoria.css       Estilos del módulo de pre-auditoría
+├── js/
+│   ├── sigep.js               Íconos, UI común, sesión, SW e instalación PWA
+│   ├── sync.js                Motor híbrido IndexedDB ⇄ Supabase
+│   └── preauditoria.js        Lógica de pre-auditoría, checklist, PDF, citas y notificaciones
+├── BD/
+│   └── supabase.sql           Tablas, RLS, datos de prueba y RPC verificar_login
+├── docs/                      PDFs de ejemplo para el visor offline
+└── img/                       Íconos PWA y recursos de interfaz
 ```
-sigep-diseno-comun/
-├── index.html              Página de presentación del sistema (portal con los 4 módulos)
-├── guia.html               Guía visual: colores, tipografía y componentes con su código
-├── plantilla-modulo.html   Pantalla vacía con comentarios para empezar tu módulo
-├── ejemplos/modulo-1..4    Una pantalla de ejemplo por módulo
-├── css/sigep.css           Estilos comunes (el único archivo de estilos compartido)
-├── js/sigep.js             Íconos, menú en celular y pestañas
-└── img/                    Capturas que usa la guía
+
+## Uso local
+
+Una PWA requiere `http://localhost` o HTTPS para registrar el Service Worker. Ejemplo:
+
+```powershell
+npx serve .
 ```
 
-Abre `index.html` o `guia.html` con doble clic para verlos en el navegador.
+Luego abre la URL local en el navegador.
 
-## Cómo aplicarlo en tu módulo
+## Acceso
 
-1. Copia `css/sigep.css` y `js/sigep.js` a tu proyecto.
-2. Enlázalos en tu HTML:
-   ```html
-   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-   <link rel="stylesheet" href="css/sigep.css">
-   ...
-   <script src="js/sigep.js"></script>
-   ```
-3. Pon tu número de módulo en el `<body>`:
+`index.html` redirige a `Frontend/login.html`. Al iniciar sesión se guarda `sigep_sesion` (JSON) y claves de respaldo en `localStorage`, lo que permite reabrir la app sin re-autenticarse constantemente.
 
-   | Módulo | Propuesta | `data-modulo` | Color |
-   | --- | --- | --- | --- |
-   | 1 | Expediente digital y gestión de documentos | `1` | Rosa |
-   | 2 | Administración y gestión académica | `2` | Azul |
-   | 3 | Seguimiento académico y revisión de estadías | `3` | Verde |
-   | 4 | Portal del alumno y acceso móvil | `4` | Ámbar |
+| Rol | Destino |
+| --- | --- |
+| Asesor | `Frontend/modulo-3.html` |
+| Alumno | `Frontend/modulo-4.html` |
 
-4. Copia el menú y la barra superior de `plantilla-modulo.html` y escribe tu contenido
-   dentro de `<main class="content">`. Usa las clases de la guía: `btn`, `card`, `stats`,
-   `stat`, `table-wrap` + `tbl`, `chip`, `tabs`, `rows`, `field`.
+## Configuración de Supabase
 
-**Si tu proyecto es React:** importa `sigep.css` una vez (`import './css/sigep.css'`) y
-usa `className` en lugar de `class`. Los íconos los puedes poner con `<i data-ic="users"></i>`
-cargando `sigep.js`, o copiar el `<svg>` que genera.
+1. Revisa `SUPABASE_URL` y `SUPABASE_KEY` en `js/sync.js`.
+2. Ejecuta `BD/supabase.sql` en el editor SQL de Supabase.
+3. La tabla `usuarios` usa hashes bcrypt y el login seguro se realiza con la función RPC `verificar_login`.
 
-## Página de presentación (portal)
+Tablas sincronizadas: `dictamenes`, `evaluaciones_checklist`, `notificaciones`, `citas`.
 
-`index.html` es la página de entrada del sistema que usamos las 4. En cada tarjeta, cambia el
-`href` del botón **Entrar** por la dirección real del módulo de cada integrante y el
-texto "Integrante N" por su nombre.
+## Funcionamiento offline
 
-## Reglas
+- El Service Worker precachea el shell y PDFs de ejemplo.
+- Estrategia de caché: **Cache First** para recursos estáticos (mismo origen) y **Network First** para navegación con respaldo en caché / `offline.html`.
+- Los cambios de checklist, dictámenes, observaciones y citas se guardan en IndexedDB (`sigep-preauditoria`, v4) y se sincronizan al recuperar la red.
+- La base de datos remota (Supabase) se consulta en red; en modo offline la app usa IndexedDB como respaldo.
 
-- No cambiar los colores del menú ni de los estados (aprobado, en revisión, etc.).
-- Usar siempre las variables (`var(--primary)`), nunca códigos de color directos.
-- Una sola acción principal (botón azul) por pantalla.
-- Incluir el enlace **Portal SIGEP** al final del menú.
-- Si alguien necesita cambiar `sigep.css`, avisa al equipo: el cambio es para los 4.
+## Tecnologías
 
-## Publicarlo en GitHub Pages (opcional)
-
-En el repositorio: **Settings → Pages → Branch: main / (root) → Save**. En unos minutos
-la página de presentación queda en `https://<usuario>.github.io/<repositorio>/`.
+HTML5, CSS3, JavaScript ES6+ (Vanilla), Service Worker, Cache API, IndexedDB, Web App Manifest y Supabase JS SDK v2 (CDN).
