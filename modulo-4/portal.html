@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Acceso · Portal del alumno · SIGEP UTP</title>
+  <meta name="description" content="Inicia sesión o regístrate en el Portal del alumno para consultar tu estadía y subir tu tesina.">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- Aplicación web progresiva -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#13213F">
+  <meta name="apple-mobile-web-app-title" content="Estadías">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <!-- Diseño común SIGEP UTP (misma URL de tipografías que sw.js) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" crossorigin href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+  <link rel="stylesheet" href="css/sigep.css">
+  <link rel="stylesheet" href="css/portal.css">
+
+  <!-- Comportamiento: diseño → Supabase → configuración → módulos -->
+  <script src="js/sigep.js" defer></script>
+  <script src="js/vendor/supabase.js" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/toast.js" defer></script>
+  <script src="js/cache-api.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/portal.js" defer></script>
+  <script src="js/pwa.js" defer></script>
+</head>
+<body class="acceso" data-modulo="4">
+<a class="skip" href="#acceso">Saltar al formulario</a>
+
+<div class="acceso-shell">
+  <!-- ================= PRESENTACIÓN ================= -->
+  <aside class="acceso-info">
+    <a class="logo" href="./"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a>
+    <div class="module-pill"><span class="n">4</span><span><small>Módulo 4</small>Portal del alumno</span></div>
+    <h1>Tu estadía, <span>en un solo lugar</span>.</h1>
+    <p>Consulta tu avance, sube tu tesina y recibe las observaciones de tu asesor desde la computadora o el celular.</p>
+    <ul class="acceso-puntos">
+      <li><span class="ic-box"><i data-ic="file"></i></span>Tu tesina con todas sus versiones</li>
+      <li><span class="ic-box"><i data-ic="message"></i></span>Las observaciones de tu asesor</li>
+      <li><span class="ic-box"><i data-ic="smartphone"></i></span>Se instala en tu celular y funciona sin conexión</li>
+    </ul>
+    <a class="acceso-volver" href="./"><i data-ic="arrowL"></i>Volver al sitio</a>
+  </aside>
+
+  <!-- ================= FORMULARIOS ================= -->
+  <main class="acceso-main" id="acceso">
+    <div class="card acceso-card">
+      <p class="help warn" id="aviso-config" role="alert" hidden><i data-ic="alert"></i><span>El portal todavía no está conectado a la base de datos. Agrega los datos de Supabase en <code>js/config.js</code>.</span></p>
+
+      <div class="tabs" role="tablist" aria-label="Acceso al portal" id="tabs">
+        <button type="button" role="tab" id="tab-login" aria-controls="panel-login" aria-selected="true">Iniciar sesión</button>
+        <button type="button" role="tab" id="tab-registro" aria-controls="panel-registro" aria-selected="false" tabindex="-1">Registrarme</button>
+      </div>
+
+      <!-- ============ INICIAR SESIÓN ============ -->
+      <form class="form" id="panel-login" role="tabpanel" aria-labelledby="tab-login" novalidate>
+        <div><h2>¡Hola de nuevo!</h2><p class="sub">Entra con tu correo institucional. Alumnos y asesores usan este mismo acceso.</p></div>
+
+        <label class="field">Correo institucional
+          <input id="login-correo" name="correo" type="email" autocomplete="username" inputmode="email" required>
+          <span class="field-error" id="login-correo-error"></span>
+        </label>
+
+        <label class="field">Contraseña
+          <span class="pass">
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+            <button type="button" class="ver-pass" aria-controls="login-password" aria-pressed="false" aria-label="Mostrar contraseña"><i data-ic="eye"></i></button>
+          </span>
+          <span class="field-error" id="login-password-error"></span>
+        </label>
+        <a class="olvido" href="#recuperar" data-ir="recuperar">¿Olvidaste tu contraseña?</a>
+
+        <p class="help bad form-error" role="alert"></p>
+        <button class="btn block" type="submit">Iniciar sesión</button>
+        <p class="acceso-cambio">¿Eres alumno y aún no tienes cuenta? <a href="#registro" data-ir="registro">Regístrate</a></p>
+      </form>
+
+      <!-- ============ REGISTRO DE ALUMNO ============ -->
+      <form class="form" id="panel-registro" role="tabpanel" aria-labelledby="tab-registro" novalidate hidden>
+        <div><h2>Crea tu cuenta de alumno</h2><p class="sub">Regístrate con tus datos de estadía.</p></div>
+
+        <label class="field">Nombre completo
+          <input id="reg-nombre" name="nombre" type="text" autocomplete="name" maxlength="120" required>
+          <span class="field-error" id="reg-nombre-error"></span>
+        </label>
+
+        <div class="form-fila">
+          <label class="field">Matrícula
+            <input id="reg-matricula" name="matricula" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="10 dígitos" required>
+            <span class="field-error" id="reg-matricula-error"></span>
+          </label>
+          <fieldset class="field">
+            <legend>Nivel</legend>
+            <div class="opciones">
+              <label class="opcion"><input type="radio" name="nivel" value="TSU" required><span>TSU</span></label>
+              <label class="opcion"><input type="radio" name="nivel" value="Ingeniería"><span>Ingeniería</span></label>
+            </div>
+            <span class="field-error" id="reg-nivel-error"></span>
+          </fieldset>
+        </div>
+
+        <label class="field">Correo institucional
+          <input id="reg-correo" name="correo" type="email" autocomplete="email" inputmode="email" required>
+          <span class="field-error" id="reg-correo-error"></span>
+        </label>
+
+        <label class="field">Contraseña
+          <span class="pass">
+            <input id="reg-password" name="password" type="password" autocomplete="new-password" aria-describedby="reg-password-ayuda" required>
+            <button type="button" class="ver-pass" aria-controls="reg-password" aria-pressed="false" aria-label="Mostrar contraseña"><i data-ic="eye"></i></button>
+          </span>
+          <small id="reg-password-ayuda">Mínimo 8 caracteres, con letras y números.</small>
+          <span class="field-error" id="reg-password-error"></span>
+        </label>
+
+        <label class="field">Confirma tu contraseña
+          <input id="reg-confirmar" name="confirmar" type="password" autocomplete="new-password" required>
+          <span class="field-error" id="reg-confirmar-error"></span>
+        </label>
+
+        <p class="help bad form-error" role="alert"></p>
+        <button class="btn block" type="submit">Crear cuenta</button>
+        <p class="acceso-cambio">¿Ya tienes cuenta? <a href="#login" data-ir="login">Inicia sesión</a></p>
+      </form>
+
+      <!-- ============ RECUPERAR CONTRASEÑA (paso 1: pedir el correo) ============ -->
+      <form class="form" id="panel-recuperar" novalidate hidden aria-labelledby="t-recuperar">
+        <div><h2 id="t-recuperar">Recupera tu contraseña</h2><p class="sub">Escribe tu correo institucional y te enviaremos un enlace para crear una contraseña nueva.</p></div>
+
+        <label class="field">Correo institucional
+          <input id="rec-correo" name="correo" type="email" autocomplete="username" inputmode="email" required>
+          <span class="field-error" id="rec-correo-error"></span>
+        </label>
+
+        <p class="help ok" id="rec-enviado" role="status" hidden><i data-ic="mail"></i><span>Listo. Si el correo está registrado, te llegará un enlace en unos minutos (revisa también la carpeta de spam). Si no te llega, pide a la coordinación de estadías que restablezca tu contraseña.</span></p>
+        <p class="help bad form-error" role="alert"></p>
+        <button class="btn block" type="submit">Enviar enlace</button>
+        <p class="acceso-cambio"><a href="#login" data-ir="login">Volver a iniciar sesión</a></p>
+      </form>
+
+      <!-- ============ RECUPERAR CONTRASEÑA (paso 2: al abrir el enlace del correo) ============ -->
+      <form class="form" id="panel-nueva" novalidate hidden aria-labelledby="t-nueva">
+        <div><h2 id="t-nueva">Crea tu contraseña nueva</h2><p class="sub">Escríbela dos veces. Después entrarás directamente a tu panel.</p></div>
+
+        <label class="field">Contraseña nueva
+          <span class="pass">
+            <input id="nueva-password" name="password" type="password" autocomplete="new-password" aria-describedby="nueva-password-ayuda" required>
+            <button type="button" class="ver-pass" aria-controls="nueva-password" aria-pressed="false" aria-label="Mostrar contraseña"><i data-ic="eye"></i></button>
+          </span>
+          <small id="nueva-password-ayuda">Mínimo 8 caracteres, con letras y números.</small>
+          <span class="field-error" id="nueva-password-error"></span>
+        </label>
+
+        <label class="field">Confirma tu contraseña nueva
+          <input id="nueva-confirmar" name="confirmar" type="password" autocomplete="new-password" required>
+          <span class="field-error" id="nueva-confirmar-error"></span>
+        </label>
+
+        <p class="help bad form-error" role="alert"></p>
+        <button class="btn block" type="submit">Guardar contraseña</button>
+      </form>
+    </div>
+  </main>
+</div>
+
+<!-- Zona de avisos emergentes (la llena js/toast.js) -->
+<div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
+</body>
+</html>
