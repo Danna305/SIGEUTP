@@ -9,6 +9,9 @@
 //   { accion: 'avisar-documento', documento: '<id>' } → expediente (módulo 1):
 //       · si llama el alumno (subió un documento)     → a su asesor
 //       · si llama el asesor (lo revisó)              → al alumno
+//   { accion: 'radar', titulo, texto, rojos, prueba? } → Radar de Estadías (módulo 2):
+//       · al personal de coordinación que puede ver alumnos (o solo a quien
+//         llama, si es una prueba). Quien llama debe tener ese permiso.
 //
 // Cada aviso lleva { titulo, texto, url, modulo, etiqueta }: «url» es
 // relativa a la carpeta del módulo (modulo-1/, modulo-4/…), así el service
@@ -57,9 +60,11 @@ Deno.serve(async (req) => {
   const privada = Deno.env.get('VAPID_PRIVATE_KEY');
   if (!publica || !privada) return responder({ error: 'Faltan las claves VAPID en los secretos de la función.' }, 500);
 
-  const { accion, version, documento } = await req.json().catch(() => ({}));
+  const cuerpo = await req.json().catch(() => ({}));
+  const { accion, version, documento } = cuerpo;
   if (accion === 'clave') return responder({ clave: publica });
-  const valida = (accion === 'avisar' && typeof version === 'string') || (accion === 'avisar-documento' && typeof documento === 'string');
+  const valida = (accion === 'avisar' && typeof version === 'string') || (accion === 'avisar-documento' && typeof documento === 'string')
+    || (accion === 'radar' && typeof cuerpo.titulo === 'string');
   if (!valida) return responder({ error: 'Petición no válida.' }, 400);
 
   const url = Deno.env.get('SUPABASE_URL')!;
@@ -70,6 +75,49 @@ Deno.serve(async (req) => {
   if (!user) return responder({ error: 'Tu sesión terminó.' }, 401);
 
   const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  webpush.setVapidDetails(Deno.env.get('VAPID_SUBJECT') || 'mailto:estadias@example.com', publica, privada);
+
+  // Envía el aviso a todos los dispositivos de esas cuentas
+  async function enviarA(usuarios: string[], aviso: Record<string, unknown>) {
+    if (!usuarios.length) return { enviadas: 0, dispositivos: 0 };
+    const { data: suscripciones } = await admin.from('suscripciones_push').select('id, endpoint, p256dh, auth').in('usuario_id', usuarios);
+    let enviadas = 0;
+    for (const s of suscripciones ?? []) {
+      if (!permitido(s.endpoint)) continue;
+      try {
+        await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(aviso), { TTL: 86400 });
+        enviadas++;
+      } catch (error) {
+        // 404/410: el navegador canceló la suscripción; se borra
+        const estado = (error as { statusCode?: number }).statusCode;
+        if (estado === 404 || estado === 410) await admin.from('suscripciones_push').delete().eq('id', s.id);
+      }
+    }
+    return { enviadas, dispositivos: suscripciones?.length ?? 0 };
+  }
+
+  if (accion === 'radar') {
+    // Solo el personal que puede ver alumnos manda (y recibe) alertas del radar
+    const { data: puede } = await usuario.rpc('tiene_permiso', { p_permiso: 'alumnos.ver' });
+    if (!puede) return responder({ error: 'Tu rol no tiene permiso para esta acción.' }, 403);
+    let destinatarios = [user.id];
+    if (!cuerpo.prueba) {
+      const { data: personal } = await admin.from('personal_admin').select('id, roles_admin (permisos)').eq('activo', true);
+      destinatarios = (personal ?? [])
+        .filter((p) => ((p.roles_admin as { permisos?: string[] } | null)?.permisos ?? []).includes('alumnos.ver'))
+        .map((p) => p.id as string);
+    }
+    const rojos = Number.isFinite(Number(cuerpo.rojos)) ? Math.max(0, Math.round(Number(cuerpo.rojos))) : undefined;
+    return responder(await enviarA(destinatarios, {
+      titulo: String(cuerpo.titulo).slice(0, 120),
+      texto: String(cuerpo.texto || '').slice(0, 300),
+      url: 'index.html#/app/radar',
+      modulo: 2,
+      etiqueta: 'sigep-radar',
+      rojos,
+    }));
+  }
+
   const asesorDe = async (alumnoId: string) =>
     (await admin.from('asignaciones_asesor').select('asesor_id').eq('alumno_id', alumnoId).maybeSingle()).data?.asesor_id as string | undefined;
   const nombreDe = async (alumnoId: string) =>
@@ -143,21 +191,6 @@ Deno.serve(async (req) => {
 
   if (!destinatario) return responder({ enviadas: 0, motivo: 'El alumno no tiene asesor asignado.' });
 
-  const { data: suscripciones } = await admin.from('suscripciones_push').select('id, endpoint, p256dh, auth').eq('usuario_id', destinatario);
-  webpush.setVapidDetails(Deno.env.get('VAPID_SUBJECT') || 'mailto:estadias@example.com', publica, privada);
-
-  let enviadas = 0;
-  for (const s of suscripciones ?? []) {
-    if (!permitido(s.endpoint)) continue;
-    try {
-      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        JSON.stringify(aviso), { TTL: 86400 });
-      enviadas++;
-    } catch (error) {
-      // 404/410: el navegador canceló la suscripción; se borra
-      const estado = (error as { statusCode?: number }).statusCode;
-      if (estado === 404 || estado === 410) await admin.from('suscripciones_push').delete().eq('id', s.id);
-    }
-  }
+  const { enviadas } = await enviarA([destinatario], aviso);
   return responder({ enviadas });
 });

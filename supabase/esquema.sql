@@ -37,19 +37,17 @@ create policy "alumno consulta su registro"
   to authenticated
   using ((select auth.uid()) = id);
 
+-- El alumno no modifica su renglón directamente: sus datos académicos los
+-- administra la coordinación desde el Módulo 2 (supabase/modulo-2.sql).
 drop policy if exists "alumno actualiza su registro" on public.alumnos;
-create policy "alumno actualiza su registro"
-  on public.alumnos for update
-  to authenticated
-  using ((select auth.uid()) = id)
-  with check ((select auth.uid()) = id);
 
 -- No hay política de INSERT: el registro lo crea el disparador del punto 3.
 
 -- Permisos de la API para usuarios con sesión (necesarios si el proyecto no
 -- expone automáticamente las tablas nuevas; las políticas RLS siguen aplicando).
 revoke all on public.alumnos from anon;
-grant select, update on public.alumnos to authenticated;
+revoke update on public.alumnos from authenticated;
+grant select on public.alumnos to authenticated;
 
 -- --------------------------------------------------------------------------
 -- 3. Al crear una cuenta, se crea automáticamente su renglón en alumnos

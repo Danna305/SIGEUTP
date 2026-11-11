@@ -175,8 +175,9 @@ panel. Estas dos funciones solo se pueden ejecutar desde el SQL Editor.
 
 ## Datos de prueba
 
-Los datos de prueba son de todo SIGEP (módulos 1, 3 y 4): **12 cuentas** (10 alumnos y
-2 asesores) con tesinas, observaciones, expedientes, checklist de pre-auditoría y citas.
+Los datos de prueba son de todo SIGEP (módulos 1 a 4): **15 cuentas** (10 alumnos,
+2 asesores y 3 de coordinación) con tesinas, observaciones, expedientes, checklist de
+pre-auditoría, citas, periodos y empresas.
 Las instrucciones y la tabla de cuentas están en el `README.md` de la raíz del repositorio.
 
 ## Contraseñas

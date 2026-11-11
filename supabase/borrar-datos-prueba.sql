@@ -1,12 +1,14 @@
 -- ==========================================================================
--- borrar-datos-prueba.sql — Quita las 12 cuentas de prueba
+-- borrar-datos-prueba.sql — Quita las 15 cuentas de prueba
 -- --------------------------------------------------------------------------
 -- Borra las cuentas @sigep-pruebas.mx y, en cascada, sus renglones en
 -- alumnos, asesores, asignaciones_asesor, tesina_versiones,
 -- tesina_observaciones, tesina_notas, expedientes, documentos,
 -- revisiones_documento e historial_documentos. También borra lo del
 -- Módulo 3 (dictámenes, checklist, notificaciones y citas), que guarda los
--- ids como texto. No toca ninguna cuenta real.
+-- ids como texto. Al final quita los periodos y empresas de prueba del
+-- Módulo 2 (los que tienen id «prueba-…»), si ya ningún alumno real los usa.
+-- No toca ninguna cuenta real.
 --
 -- Los archivos quedan en Storage: el resultado de esta consulta lista las
 -- carpetas que debes borrar en Storage → tesinas, voz y expedientes
@@ -43,3 +45,9 @@ select b.email as cuenta_borrada,
             then b.id::text else '—' end as carpeta_en_expedientes
 from borradas b
 order by b.email;
+
+-- Módulo 2: periodos y empresas de prueba que ya no usa nadie
+delete from public.empresas e
+ where e.id like 'prueba-%' and not exists (select 1 from public.alumnos a where a.empresa_id = e.id);
+delete from public.periodos p
+ where p.id like 'prueba-%' and not exists (select 1 from public.alumnos a where a.periodo_id = p.id);

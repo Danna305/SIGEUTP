@@ -7,7 +7,7 @@ mismo proyecto de Supabase y la misma cuenta (si entras a un módulo, ya entrast
 | Módulo | Propuesta | Integrante | Carpeta | Estado |
 | --- | --- | --- | --- | --- |
 | 1 | Expediente digital y gestión de documentos | Belén | `modulo-1/` | Funcional con Supabase |
-| 2 | Administración y gestión académica | Danna | `ejemplos/modulo-2.html` | Solo pantalla de ejemplo |
+| 2 | Administración y gestión académica (coordinación) | Danna | `modulo-2/` | Funcional con Supabase |
 | 3 | Seguimiento académico (pre-auditoría de tesinas) | María José | `modulo-3/` | Funcional con Supabase |
 | 4 | Portal del alumno (tesina por versiones) | Alexia | `modulo-4/` | Funcional con Supabase |
 
@@ -26,12 +26,13 @@ SIGEUTP/
 │   └── vendor/             Librerías compartidas: supabase.js (MIT) y pdfjs/ (Apache 2.0)
 ├── supabase/               Base de datos de todos los módulos (ver «Configurar Supabase»)
 ├── modulo-1/               Expediente digital: login.html, modulo-1.html, js/expediente.js
+├── modulo-2/               Administración: index.html (panel de coordinación), js/datos.js, js/app.js
 ├── modulo-3/               Pre-auditoría: Frontend/login.html, modulo-3.html (asesor), alumno.html
 └── modulo-4/               Portal del alumno: portal.html, alumno.html, asesor.html
 ```
 
 Cada módulo es su propia PWA (manifiesto, service worker y caché independientes), con
-alcance en su carpeta. Las cachés tienen nombres distintos (`sigep-modulo-1-…`,
+alcance en su carpeta. Las cachés tienen nombres distintos (`sigep-modulo-1-…`, `sigep-m2-…`,
 `sigep-preauditoria-…`, `estadias-…`) y cada service worker solo borra las suyas.
 
 ## Configurar Supabase (una sola vez)
@@ -43,27 +44,36 @@ alcance en su carpeta. Las cachés tienen nombres distintos (`sigep-modulo-1-…
    1. `supabase/esquema.sql` — alumnos y registro automático
    2. `supabase/tesina.sql` — asesores, tesinas, observaciones, notas, voz y push (Módulo 4)
    3. `supabase/modulo-1.sql` — expedientes, documentos, revisiones e historial (Módulo 1)
-   4. `supabase/modulo-3.sql` — dictámenes, checklist, avisos y citas (Módulo 3)
+   4. `supabase/modulo-2.sql` — coordinación: roles, periodos, empresas y datos académicos (Módulo 2)
+   5. `supabase/modulo-3.sql` — dictámenes, checklist, avisos y citas (Módulo 3)
 
    Todos se pueden volver a ejecutar sin duplicar nada.
-4. **Notificaciones push:** sigue los pasos de `modulo-4/README.md` («Notificaciones push»).
-   La misma función `enviar-push` avisa de los tres módulos.
-5. **Asesores:** se crean en **Authentication → Users** y se activan con
-   `select hacer_asesor('correo', 'Nombre');` y `select asignar_asesor('matrícula', 'correo');`.
+4. **Funciones del servidor** (Edge Functions → Deploy a new function → Via Editor):
+   - `enviar-push`: pega `supabase/functions/enviar-push/index.ts`. Para las claves VAPID
+     sigue los pasos de `modulo-4/README.md` («Notificaciones push»). Avisa de los módulos 1 a 4.
+   - `gestion-cuentas`: pega `supabase/functions/gestion-cuentas/index.ts`. Con ella la
+     coordinación (Módulo 2) da de alta y de baja alumnos, asesores y usuarios. No necesita secretos.
+5. **Primer administrador del Módulo 2:** crea su cuenta en **Authentication → Users** y
+   ejecuta `select hacer_personal('correo', 'Nombre', 'admin');`. Desde el panel del Módulo 2
+   ya se registran alumnos, asesores, más usuarios, periodos, empresas y asignaciones.
 
 ### Seguridad
 
 - Inicio de sesión con Supabase Auth (contraseñas cifradas por Supabase).
-- Reglas RLS en todas las tablas: el alumno solo ve lo suyo y el asesor solo a sus alumnos
-  asignados. Los cambios importantes se hacen con funciones de la base de datos que
-  validan quién llama (`subir_documento`, `revisar_documento`, `observar_version`…).
+- Reglas RLS en todas las tablas: el alumno solo ve lo suyo, el asesor solo a sus alumnos
+  asignados y la coordinación lo que permite su rol. Los cambios importantes se hacen con
+  funciones de la base de datos que validan quién llama (`subir_documento`,
+  `revisar_documento`, `observar_version`, `m2_asignar`…).
+- Las altas y bajas de cuentas las hace la función `gestion-cuentas`: la llave secreta nunca
+  llega al navegador.
 - Archivos en buckets privados (`expedientes`, `tesinas`, `voz`), uno por carpeta de alumno.
 
 ## Datos de prueba (todos los módulos)
 
-**12 cuentas** (10 alumnos y 2 asesores), todas con la contraseña **Prueba2026**:
+**15 cuentas** (10 alumnos, 2 asesores y 3 de coordinación), todas con la contraseña **Prueba2026**:
 
-1. En **SQL Editor**, ejecuta `supabase/datos-prueba.sql` (crea las cuentas y asigna asesores).
+1. En **SQL Editor**, ejecuta `supabase/datos-prueba.sql` (crea las cuentas, asigna asesores y
+   crea los periodos, 8 empresas con contactos y los datos académicos del Módulo 2).
 2. En una terminal, en la carpeta del repositorio: `node supabase/sembrar-datos-prueba.mjs`
    (Node 18 o superior; no instala nada). Entra como cada alumno y asesor, igual que en la app:
    - **Módulo 4:** 12 versiones de tesina en PDF y 10 observaciones.
@@ -74,6 +84,9 @@ alcance en su carpeta. Las cachés tienen nombres distintos (`sigep-modulo-1-…
 
 | Cuenta | Rol | Situación |
 | --- | --- | --- |
+| `prueba.admin@sigep-pruebas.mx` | Coordinación · Administrador | Todo el Módulo 2, incluidos usuarios y permisos |
+| `prueba.coordinacion@sigep-pruebas.mx` | Coordinación · Coordinador | Alumnos, asesores, asignaciones y empresas |
+| `prueba.consulta@sigep-pruebas.mx` | Coordinación · Consulta | Solo consulta |
 | `prueba.asesor1@sigep-pruebas.mx` | Asesora (Dra. Mariana Torres) | Alumnos 01, 02, 03, 04 y 10 |
 | `prueba.asesor2@sigep-pruebas.mx` | Asesor (Mtro. Ricardo Vega) | Alumnos 05, 06, 07 y 09 |
 | `prueba.alumno01@…` | Alumna | Tesina aprobada (3 versiones) · expediente completo |
@@ -87,8 +100,8 @@ alcance en su carpeta. Las cachés tienen nombres distintos (`sigep-modulo-1-…
 | `prueba.alumno09@…` | Alumna | Sin tesina · expediente a la mitad |
 | `prueba.alumno10@…` | Alumno | Sin tesina · IMSS con corrección |
 
-Para quitarlas: `supabase/borrar-datos-prueba.sql` y borra en **Storage** (buckets
-`tesinas`, `voz` y `expedientes`) las carpetas que lista.
+Para quitarlas: `supabase/borrar-datos-prueba.sql` (también quita los periodos y empresas
+de prueba) y borra en **Storage** (buckets `tesinas`, `voz` y `expedientes`) las carpetas que lista.
 
 ## Probar en la computadora
 

@@ -1,14 +1,16 @@
 // =====================================================================
 // sw.js - Service Worker de SIGEP UTP · Módulo 2 (Administración académica)
 // Usa la API Cache con tres cachés y una estrategia distinta para cada una:
-//   sigep-shell     -> Cache First             (archivos base de la app)
-//   sigep-dinamica  -> Stale-While-Revalidate  (imágenes, video, fuentes)
-//   sigep-datos     -> Network First           (respuestas de la API)
+//   sigep-m2-shell     -> Cache First             (archivos base de la app)
+//   sigep-m2-dinamica  -> Stale-While-Revalidate  (imágenes, video, fuentes)
+//   sigep-m2-datos     -> Network First           (copia de los datos de Supabase;
+//                                                  la guarda js/datos.js)
+// Los datos vienen de Supabase (otro dominio): el SW no los intercepta.
 // =====================================================================
-const VERSION = 'v6';
-const CACHE_SHELL = `sigep-shell-${VERSION}`;
-const CACHE_DINAMICA = 'sigep-dinamica-v1';
-const CACHE_DATOS = 'sigep-datos-v1';
+const VERSION = 'v7';
+const CACHE_SHELL = `sigep-m2-shell-${VERSION}`;
+const CACHE_DINAMICA = 'sigep-m2-dinamica-v1';
+const CACHE_DATOS = 'sigep-m2-datos-v1';
 const CACHES_ACTUALES = [CACHE_SHELL, CACHE_DINAMICA, CACHE_DATOS];
 const MAX_DINAMICA = 40;                 // máximo de archivos en la caché dinámica
 const OFFLINE_URL = './offline.html';
@@ -19,8 +21,11 @@ const ARCHIVOS_SHELL = [
   './index.html',
   './offline.html',
   './css/styles.css',
+  './js/datos.js',
   './js/app.js',
   './js/radar.js',
+  '../js/config.js',
+  '../js/vendor/supabase.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -29,8 +34,6 @@ const ARCHIVOS_SHELL = [
   './icons/favicon-32.png'
 ];
 const FUENTES = ['fonts.googleapis.com', 'fonts.gstatic.com'];
-// Solo se guardan estas rutas de la API (consultas, nunca cambios)
-const API_CACHEABLE = ['/api/estado', '/api/version', '/api/radar'];
 
 // ---------- Utilidades ----------
 // Copia la respuesta agregando la fecha en que se guardó (encabezado sw-fecha)
@@ -69,7 +72,8 @@ self.addEventListener('activate', (event) => {
     caches.keys()                                          // caches.keys()
       .then((nombres) => Promise.all(
         nombres
-          .filter((n) => !CACHES_ACTUALES.includes(n))
+          // Solo las suyas: los otros módulos de SIGEP comparten el dominio
+          .filter((n) => n.startsWith('sigep-m2-') && !CACHES_ACTUALES.includes(n))
           .map((n) => { console.log('[SW SIGEP] Borrando caché antigua', n); return caches.delete(n); }) // caches.delete()
       ))
       .then(() => self.clients.claim())
@@ -97,7 +101,7 @@ async function networkFirst(request) {
     if (respuesta.ok) await cache.put(request, await conFecha(respuesta)); // cache.put()
     return respuesta;
   } catch (e) {
-    const guardada = await cache.match(request);           // cache.match()
+    const guardada = await caches.match(request);          // caches.match(): esta caché o el App Shell
     if (guardada) return guardada;
     return new Response(JSON.stringify({ error: 'Sin conexión y sin datos guardados en este dispositivo.' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } });
@@ -142,10 +146,8 @@ self.addEventListener('fetch', (event) => {
   const propio = url.origin === self.location.origin;
   if (!propio && !FUENTES.includes(url.hostname)) return;
 
-  if (propio && url.pathname.startsWith('/api/')) {
-    if (API_CACHEABLE.includes(url.pathname)) event.respondWith(networkFirst(request));
-    return;
-  }
+  // La configuración compartida va por red primero (cambia al configurar Supabase)
+  if (propio && url.pathname.endsWith('/js/config.js')) { event.respondWith(networkFirst(request)); return; }
   if (request.headers.has('range')) { event.respondWith(videoDesdeCache(request)); return; }
   const dinamico = !propio || /\/(img|media)\//.test(url.pathname);
   event.respondWith(dinamico ? staleWhileRevalidate(event) : cacheFirst(request));
@@ -171,12 +173,12 @@ self.addEventListener('push', (event) => {
   const titulo = m.titulo || 'SIGEP UTP · Radar de Estadías';
   event.waitUntil(Promise.all([
     self.registration.showNotification(titulo, {
-      body: m.cuerpo || 'Hay cambios en el Radar de Estadías.',
+      body: m.texto || m.cuerpo || 'Hay cambios en el Radar de Estadías.',
       icon: './icons/icon-192.png',
       badge: './icons/favicon-32.png',
-      tag: m.tag || 'sigep-radar',
+      tag: m.etiqueta || m.tag || 'sigep-radar',
       renotify: true,
-      data: { url: m.url || '/#/app/radar' },
+      data: { url: destino(m.url || 'index.html#/app/radar', m.modulo) },
       actions: [{ action: 'radar', title: 'Ver radar' }, { action: 'asignaciones', title: 'Asignar asesores' }]
     }),
     'setAppBadge' in self.navigator && typeof m.rojos === 'number'
@@ -185,14 +187,20 @@ self.addEventListener('push', (event) => {
   ]));
 });
 
+// La url del aviso es relativa a la carpeta del módulo que lo generó
+function destino(url, modulo) {
+  const base = modulo && Number(modulo) !== 2 ? new URL(`../modulo-${Number(modulo)}/`, self.registration.scope) : self.registration.scope;
+  return new URL(url, base).href;
+}
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const destino = event.action === 'asignaciones' ? '/#/app/asignaciones' : (event.notification.data?.url || '/#/app/radar');
+  const ir = event.action === 'asignaciones' ? destino('index.html#/app/asignaciones') : (event.notification.data?.url || destino('index.html#/app/radar'));
   event.waitUntil((async () => {
     const ventanas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const abierta = ventanas.find((c) => new URL(c.url).origin === self.location.origin);
-    if (abierta) { await abierta.focus(); return abierta.navigate(destino).catch(() => abierta.postMessage({ tipo: 'ir', url: destino })); }
-    return self.clients.openWindow(destino);
+    const abierta = ventanas.find((c) => c.url.startsWith(self.registration.scope));
+    if (abierta) { await abierta.focus(); return abierta.navigate(ir).catch(() => abierta.postMessage({ tipo: 'ir', url: ir })); }
+    return self.clients.openWindow(ir);
   })());
 });
 
@@ -215,17 +223,24 @@ function enviarCola() {
   if (enviando) return enviando;            // evita enviar dos veces la misma acción
   enviando = (async () => {
     const bd = await abrirBD();
-    const token = await pedir(bd.transaction('sesion').objectStore('sesion').get('token'));
+    // Credenciales que guardó la página: token de la sesión, URL y clave publicable de Supabase
+    const cred = await pedir(bd.transaction('sesion').objectStore('sesion').get('credenciales'));
     const pendientes = await pedir(bd.transaction('cola').objectStore('cola').getAll());
     const resultado = { enviadas: 0, rechazadas: [] };
     for (const a of pendientes) {
+      if (!cred || a.ruta !== '/asignaciones') break;          // la página la enviará al abrirse
+      const ids = (a.cuerpo && a.cuerpo.alumno_ids) || [];
       let r;
       try {
-        r = await fetch('/api' + a.ruta, { method: a.metodo, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(a.cuerpo) });
+        r = await fetch(`${cred.url}/rest/v1/rpc/m2_asignar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: cred.key, Authorization: 'Bearer ' + cred.token },
+          body: JSON.stringify({ p_alumnos: ids, p_asesor: a.cuerpo.asesor_id, p_tipo: ids.length > 1 ? 'masiva' : 'individual' })
+        });
       } catch (e) { throw e; }                  // sigue sin internet: el navegador reintentará después
       const d = await r.json().catch(() => ({}));
       if (r.status === 401) break;              // sesión vencida: se queda en la cola hasta volver a entrar
-      if (r.ok) resultado.enviadas++; else resultado.rechazadas.push({ descripcion: a.descripcion, error: d.error || 'Error ' + r.status });
+      if (r.ok) resultado.enviadas++; else resultado.rechazadas.push({ descripcion: a.descripcion, error: d.message || 'Error ' + r.status });
       await pedir(bd.transaction('cola', 'readwrite').objectStore('cola').delete(a.id));
     }
     const ventanas = await self.clients.matchAll({ type: 'window' });

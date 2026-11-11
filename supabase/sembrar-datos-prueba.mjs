@@ -358,4 +358,4 @@ for (const correoAsesor of [ASESOR1, ASESOR2]) {
 console.log(`Módulo 3 listo: ${filasM3} renglones guardados o actualizados.`);
 
 console.log('\nÚltimo paso: ejecuta supabase/fechas-datos-prueba.sql en el SQL Editor para repartir las fechas.');
-console.log('Cuentas: prueba.alumno01…10@sigep-pruebas.mx y prueba.asesor1…2@sigep-pruebas.mx · contraseña Prueba2026');
+console.log('Cuentas: prueba.alumno01…10, prueba.asesor1…2, prueba.admin, prueba.coordinacion y prueba.consulta (@sigep-pruebas.mx) · contraseña Prueba2026');

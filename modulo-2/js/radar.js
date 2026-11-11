@@ -1,7 +1,7 @@
 /* =====================================================================
    SIGEP UTP · Radar de Estadías (cálculo de riesgo)
-   El mismo archivo lo usan el servidor (Node.js) y el panel (navegador),
-   así el semáforo es idéntico en los dos lados y funciona sin conexión.
+   Se calcula en el navegador con los datos del panel, así el semáforo
+   también funciona sin conexión.
 
    Cada alumno activo del periodo recibe de 0 a 100 puntos:
      Documentos atrasados según la semana .... 30
@@ -24,8 +24,9 @@
     ['carga', 'Carga del asesor']
   ];
   // Semana del periodo en la que cada documento ya debería estar aprobado
-  const LIMITE_DOC = { aceptacion: 2, seguro: 3, plan: 5, parcial: 12, liberacion: 21 };
-  const NOMBRE_DOC = { aceptacion: 'Carta de aceptación', seguro: 'Seguro social', plan: 'Plan de trabajo', parcial: 'Reporte parcial', liberacion: 'Carta de liberación' };
+  // (documentos del expediente digital del Módulo 1)
+  const LIMITE_DOC = { presentacion: 1, aceptacion: 2, seguro: 3, ine: 3 };
+  const NOMBRE_DOC = { presentacion: 'Carta de presentación', aceptacion: 'Carta de aceptación', seguro: 'Seguro facultativo', ine: 'Identificación oficial' };
 
   const dias = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
   const UMBRAL = { alto: 50, medio: 25 };

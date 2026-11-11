@@ -1,7 +1,8 @@
 /* =====================================================================
    SIGEP UTP · Módulo 2: Administración y gestión académica
    Frontend (PWA): página informativa + panel administrativo
-   Consume la API REST de server.js con fetch()
+   Los datos vienen del Supabase de SIGEP a través de js/datos.js (M2),
+   que atiende las mismas rutas que tenía la API REST del servidor.
    ===================================================================== */
 
 /* ============ Íconos (SVG de trazo) ============ */
@@ -50,11 +51,14 @@ const P = {
 const ic = (n, s = 18) => `<svg class="i" viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true" style="width:${s}px;height:${s}px">${P[n]}</svg>`;
 
 /* ============ Catálogos ============ */
-const HOY = '2025-04-14';                      // fecha fija de la demostración (igual que el servidor)
+const HOY = M2.hoy();                           // fecha de hoy (AAAA-MM-DD, hora local)
 const CARRERAS = { ISC: 'Ing. en Sistemas Computacionales', IMT: 'Ing. en Mecatrónica', IIN: 'Ing. Industrial', LNM: 'Lic. en Negocios y Mercadotecnia', IER: 'Ing. en Energías Renovables' };
-const DOCS = [['aceptacion', 'Carta de Aceptación'], ['seguro', 'Seguro Social / IMSS'], ['plan', 'Plan de Trabajo'], ['parcial', 'Reporte Parcial'], ['liberacion', 'Carta de Liberación']];
+// Documentos del expediente digital (Módulo 1)
+const DOCS = [['presentacion', 'Carta de presentación'], ['aceptacion', 'Carta de aceptación'], ['seguro', 'Seguro facultativo (IMSS)'], ['ine', 'Identificación oficial (INE)']];
+const NIVELES = { TSU: 'TSU', 'Ingeniería': 'Ingeniería' };
 const EST_DOC = { pendiente: ['Pendiente', ''], cargado: ['En revisión', 'info'], aprobado: ['Aprobado', 'ok'], rechazado: ['Rechazado', 'bad'] };
 const EST_AL = { activo: ['Activo', 'ok'], baja: ['Baja', 'bad'], concluido: ['Concluido', ''] };
+const carreraDe = (c) => CARRERAS[c] || 'Sin carrera';
 const EST_PER = { activo: ['Activo', 'ok'], planeado: ['Planeado', 'info'], cerrado: ['Cerrado', ''] };
 const TIPO_ASG = { individual: 'Individual', masiva: 'Masiva', automatica: 'Automática' };
 const PERMISOS = [
@@ -85,12 +89,9 @@ function hace(iso) {
 }
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 3200); }
 
-/* ============ Conexión con el backend ============ */
-const API = '/api';
-const SES_KEY = 'sigep-m2-sesion';
+/* ============ Conexión con la base de datos (js/datos.js) ============ */
 let S = null, PERMS = [], VERSION = 0;
-let SESION = (() => { try { return JSON.parse(localStorage.getItem(SES_KEY)); } catch (e) { return null; } })();
-const guardarSesion = (s) => { try { s ? localStorage.setItem(SES_KEY, JSON.stringify(s)) : localStorage.removeItem(SES_KEY); } catch (e) {} };
+let SESION = null;   // { id, nombre, email, rol_id, rol, permisos } del personal con sesión
 const can = (p) => PERMS.includes(p);
 
 // Índices para consultar rápido asignaciones, cargas y contactos
@@ -107,18 +108,14 @@ function indexar() {
 function setEstado(d) { VERSION = d.version; S = d.datos; PERMS = d.permisos; indexar(); if (typeof ponerBadge === 'function') ponerBadge(); }
 
 async function api(metodo, ruta, cuerpo) {
-  const opt = { method: metodo, headers: { 'Content-Type': 'application/json' } };
-  if (SESION?.token) opt.headers.Authorization = 'Bearer ' + SESION.token;
-  if (cuerpo !== undefined) opt.body = JSON.stringify(cuerpo);
-  let r;
-  try { r = await fetch(API + ruta, opt); }
-  catch (e) { throw new Error('Sin conexión con el servidor. Los cambios necesitan internet.'); }
-  const data = await r.json().catch(() => ({}));
-  if (r.status === 401 && SESION && ruta !== '/login') { cerrarSesion(); go('#/login'); throw new Error(data.error || 'Tu sesión terminó.'); }
-  if (!r.ok) throw new Error(data.error || 'Ocurrió un error en el servidor.');
-  return data;
+  try {
+    return await M2.pedir(metodo, ruta, cuerpo);
+  } catch (e) {
+    if (e.status === 401 && SESION) { cerrarSesion(); go('#/login'); }
+    throw e;
+  }
 }
-// Ejecuta un cambio en el servidor, actualiza los datos, redibuja y avisa
+// Ejecuta un cambio en la base de datos, actualiza los datos, redibuja y avisa
 async function accion(metodo, ruta, cuerpo, mensaje, despues) {
   try {
     const d = await api(metodo, ruta, cuerpo);
@@ -130,7 +127,7 @@ async function accion(metodo, ruta, cuerpo, mensaje, despues) {
   } catch (e) { toast(e.message); return null; }
 }
 const cargarEstado = async () => setEstado(await api('GET', '/estado'));
-function cerrarSesion() { SESION = null; guardarSesion(null); S = null; PERMS = []; UI.pop = null; UI.menu = false; if (typeof guardarTokenBD === 'function') guardarTokenBD(null); if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {}); }
+function cerrarSesion() { SESION = null; S = null; PERMS = []; UI.pop = null; UI.menu = false; if (typeof guardarTokenBD === 'function') guardarTokenBD(null); if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {}); }
 
 // Cada 8 s revisa si otro usuario hizo cambios
 async function sincronizar() {
@@ -147,7 +144,8 @@ async function sincronizar() {
 
 /* ============ Consultas sobre los datos ============ */
 const per = (id) => S.periodos.find((p) => p.id === id);
-const activo = () => S.periodos.find((p) => p.estado === 'activo') || S.periodos[S.periodos.length - 1];
+const SIN_PERIODO = { id: '', clave: 'SIN-PERIODO', nombre: 'Sin periodo registrado', inicio: HOY, fin: HOY, estado: 'planeado' };
+const activo = () => S.periodos.find((p) => p.estado === 'activo') || S.periodos[S.periodos.length - 1] || SIN_PERIODO;
 const al = (id) => S.alumnos.find((a) => a.id === id);
 const as = (id) => S.asesores.find((a) => a.id === id);
 const em = (id) => S.empresas.find((e) => e.id === id);
@@ -204,7 +202,7 @@ const UI = {
   em: { q: '', conv: '' },
   ex: { q: '', doc: '', est: '', carrera: '' },
   us: { tab: 'usuarios' },
-  ca: { abiertos: new Set(), log: [], url: '/api/estado', resultado: null, fechaDatos: null }
+  ca: { abiertos: new Set(), log: [], url: 'datos/estado.json', resultado: null, fechaDatos: null }
 };
 
 /* ============ Router ============ */
@@ -239,18 +237,18 @@ function renderLanding(sec) {
       ['calendar', 'Creación y administración de periodos', 'Fechas, clave y semanas de cada periodo. Solo uno puede estar activo a la vez.'],
       ['shuffle', 'Asignación de asesores', 'Individual, masiva (varios alumnos a la vez) o automática equilibrando la carga. Nunca rebasa la capacidad del asesor.'],
       ['building', 'Gestión de empresas y contactos', 'RFC, giro, convenio con fecha de vencimiento y varios contactos por empresa, con uno principal.'],
-      ['folder', 'Estado general de expedientes', 'Avance de los 5 documentos de cada alumno, con filtros por documento y estado.'],
+      ['folder', 'Estado general de expedientes', 'Avance de los 4 documentos del expediente digital (Módulo 1) de cada alumno, con filtros por documento y estado.'],
       ['filter', 'Filtros y búsquedas avanzadas', 'Combina carrera, grupo, periodo, estado, asesor, empresa y expediente. Exporta el resultado a CSV.'],
       ['bar', 'Panel con estadísticas básicas', 'Alumnos sin asesor, carga de asesores, convenios vencidos y avance de documentación en un vistazo.'],
-      ['shield', 'Gestión de usuarios y permisos', 'Usuarios con rol y una matriz de permisos editable. El servidor valida cada acción.']
+      ['shield', 'Gestión de usuarios y permisos', 'Usuarios con rol y una matriz de permisos editable. La base de datos valida cada acción.']
     ];
     const tablas = [
-      ['usuarios', [['id', 'PK'], ['nombre'], ['email', 'UQ'], ['password_hash'], ['rol_id', 'FK → roles'], ['activo'], ['ultimo_acceso']]],
-      ['roles', [['id', 'PK'], ['nombre'], ['descripcion'], ['permisos']]],
-      ['alumnos', [['id', 'PK'], ['matricula', 'UQ'], ['nombre'], ['email'], ['carrera'], ['grupo'], ['periodo_id', 'FK → periodos'], ['empresa_id', 'FK → empresas'], ['proyecto'], ['estado']]],
-      ['asesores', [['id', 'PK'], ['nombre'], ['email', 'UQ'], ['carrera'], ['area'], ['capacidad'], ['activo']]],
+      ['personal_admin', [['id', 'PK · FK → auth.users'], ['nombre'], ['correo', 'UQ'], ['rol_id', 'FK → roles_admin'], ['activo'], ['ultimo_acceso']]],
+      ['roles_admin', [['id', 'PK'], ['nombre'], ['descripcion'], ['permisos']]],
+      ['alumnos', [['id', 'PK · FK → auth.users'], ['matricula', 'UQ'], ['nombre'], ['correo'], ['nivel'], ['carrera'], ['grupo'], ['periodo_id', 'FK → periodos'], ['empresa_id', 'FK → empresas'], ['proyecto'], ['estado']]],
+      ['asesores', [['id', 'PK · FK → auth.users'], ['nombre'], ['correo', 'UQ'], ['carrera'], ['area'], ['capacidad'], ['activo']]],
       ['periodos', [['id', 'PK'], ['clave', 'UQ'], ['nombre'], ['inicio'], ['fin'], ['estado']]],
-      ['asignaciones_asesor', [['id', 'PK'], ['alumno_id', 'FK → alumnos'], ['asesor_id', 'FK → asesores'], ['periodo_id', 'FK → periodos'], ['tipo'], ['fecha']]],
+      ['asignaciones_asesor', [['alumno_id', 'PK · FK → alumnos'], ['asesor_id', 'FK → asesores'], ['periodo_id', 'FK → periodos'], ['tipo'], ['asignado_en']]],
       ['empresas', [['id', 'PK'], ['nombre', 'UQ'], ['rfc'], ['giro'], ['ciudad'], ['convenio'], ['vence']]],
       ['contactos_empresa', [['id', 'PK'], ['empresa_id', 'FK → empresas'], ['nombre'], ['puesto'], ['email'], ['telefono'], ['principal']]]
     ];
@@ -358,11 +356,9 @@ function renderLanding(sec) {
 <section class="block" id="roles"><div class="wrap two">
   <div>
     <h2 class="slab">Roles y permisos</h2>
-    <p class="intro" style="margin-bottom:20px">Cada usuario entra con un rol. El administrador puede cambiar qué permite cada rol desde la sección Usuarios y permisos, y el servidor rechaza cualquier acción no autorizada.</p>
-    <div class="card"><h3 style="font-size:1rem;margin-bottom:10px">Usuarios de demostración</h3>
-      <div class="rows">
-        ${[['Administrador', 'admin@utpuebla.edu.mx'], ['Coordinador de carrera', 'coordinacion@utpuebla.edu.mx'], ['Consulta', 'consulta@utpuebla.edu.mx']].map(([r, e]) => `<div class="r"><div class="grow"><b>${r}</b><span class="mono">${e}</span></div></div>`).join('')}
-      </div><p class="muted small" style="margin-top:10px">Contraseña de los tres: <span class="mono" style="color:var(--text)">demo1234</span></p></div>
+    <p class="intro" style="margin-bottom:20px">Cada usuario entra con un rol. El administrador puede cambiar qué permite cada rol desde la sección Usuarios y permisos, y la base de datos rechaza cualquier acción no autorizada.</p>
+    <div class="card"><h3 style="font-size:1rem;margin-bottom:10px">Una sola cuenta para todo SIGEP</h3>
+      <p class="muted small">El personal de coordinación entra con su cuenta de SIGEP (Supabase Auth). Si ya inició sesión en otro módulo, entra directo. Las cuentas de prueba están en el README del repositorio.</p></div>
   </div>
   <div class="table perm-table" style="--cols:2.4fr .8fr .8fr .8fr">
     <div class="trow head"><span>Permiso</span><span>Admin</span><span>Coord.</span><span>Consulta</span></div>
@@ -372,9 +368,9 @@ function renderLanding(sec) {
 
 <section class="block" id="datos"><div class="wrap">
   <h2 class="slab">Modelo de datos</h2>
-  <p class="intro">Las ocho tablas del módulo. El servidor las guarda en <b>Supabase</b> (PostgreSQL), creadas con <span class="mono">database/supabase.sql</span>; si no hay llaves configuradas usa el archivo <span class="mono">data/db.json</span>. También se incluye <span class="mono">database/esquema.sql</span> para MySQL.</p>
+  <p class="intro">Las tablas que usa el módulo, en el mismo <b>Supabase</b> (PostgreSQL) de SIGEP: <span class="mono">supabase/modulo-2.sql</span> crea las propias y agrega los datos académicos a <span class="mono">alumnos</span>, <span class="mono">asesores</span> y <span class="mono">asignaciones_asesor</span>, que comparten los cuatro módulos</p>
   <div class="er">${tablas.map(([n, cols]) => `<article class="er-t"><h3>${n}</h3><ul>${cols.map(([c, k]) => `<li><span>${c}</span>${k ? `<em class="${k.startsWith('FK') ? 'fk' : k === 'PK' ? 'pk' : 'uq'}">${k}</em>` : ''}</li>`).join('')}</ul></article>`).join('')}</div>
-  <p class="muted small" style="margin-top:16px">Un alumno tiene una sola asignación de asesor por periodo (clave única <span class="mono">alumno_id + periodo_id</span>), así se conserva el historial de periodos anteriores.</p>
+  <p class="muted small" style="margin-top:16px">Cada alumno tiene un solo asesor (clave <span class="mono">alumno_id</span>), el mismo que lo revisa en los módulos 1, 3 y 4.</p>
 </div></section>
 
 <section class="block" id="accion"><div class="wrap">
@@ -399,12 +395,12 @@ function renderLanding(sec) {
   <div class="mods">${modulos.map(([n, t, d]) => `<article class="mod ${n === 2 ? 'on' : ''}"><span class="mod-n">${n}</span><div><h3>${t}</h3><p>${d}</p>${n === 2 ? '<span class="chip solid">Esta propuesta</span>' : ''}</div></article>`).join('')}</div>
   <div class="two" style="margin-top:36px">
     <div class="card" style="padding:22px"><h3 style="font-size:1.05rem;margin-bottom:10px">Entregable</h3>
-      <p class="muted" style="line-height:1.65">Panel administrativo funcional con gestión de alumnos, asesores, periodos y empresas, conectado a una API REST con autenticación y permisos por rol.</p>
+      <p class="muted" style="line-height:1.65">Panel administrativo funcional con gestión de alumnos, asesores, periodos y empresas, conectado al Supabase de SIGEP con autenticación y permisos por rol.</p>
       <p style="margin-top:14px"><b>Responsable:</b> Danna Michelle Cruz Vazquez (Integrante 2)</p></div>
     <div class="card" style="padding:22px"><h3 style="font-size:1.05rem;margin-bottom:14px">Arquitectura de esta propuesta</h3>
       <div class="arch">
         <div><b>Frontend</b><span>PWA con HTML, CSS y JavaScript</span></div>${ic('chevR')}
-        <div><b>Backend</b><span>API REST con Node.js y Express</span></div>${ic('chevR')}
+        <div><b>Seguridad</b><span>Supabase Auth, RLS y funciones</span></div>${ic('chevR')}
         <div><b>Datos</b><span>Supabase (PostgreSQL)</span></div>
       </div>
       <p class="muted small" style="margin-top:14px">El sistema final del equipo usará React, Kotlin con Spring Boot y MySQL. Las rutas y tablas de esta propuesta siguen la misma estructura para facilitar la integración.</p></div>
@@ -413,7 +409,7 @@ function renderLanding(sec) {
 
 <section class="block faq" id="preguntas"><div class="wrap">
   <h2 class="slab">Preguntas frecuentes</h2><p class="intro">Dudas comunes de la coordinación al usar el panel.</p>
-  <details><summary>¿Qué pasa si un asesor ya llegó a su capacidad?</summary><p>El servidor no permite asignarle más alumnos y te dice cuántos lugares le quedan. Puedes aumentar su capacidad en Asesores o elegir a otro.</p></details>
+  <details><summary>¿Qué pasa si un asesor ya llegó a su capacidad?</summary><p>La base de datos no permite asignarle más alumnos y te dice cuántos lugares le quedan. Puedes aumentar su capacidad en Asesores o elegir a otro.</p></details>
   <details><summary>¿Cómo funciona la asignación automática?</summary><p>Toma a los alumnos activos sin asesor del periodo activo y asigna cada uno al asesor de su misma carrera con menor carga en proporción a su capacidad. Si no hay lugares, te avisa cuántos quedaron pendientes.</p></details>
   <details><summary>¿Puedo cambiar el periodo activo?</summary><p>Sí, si tu rol tiene el permiso. Al activar un periodo, el que estaba activo se cierra; sus alumnos y asignaciones se conservan como historial.</p></details>
   <details><summary>¿Por qué no puedo eliminar una empresa o un asesor?</summary><p>Para no perder información: una empresa con alumnos o un asesor con asignaciones no se puede eliminar. Cambia a los alumnos de empresa o desactiva al asesor.</p></details>
@@ -444,29 +440,24 @@ function renderLanding(sec) {
    INICIO DE SESIÓN
    ===================================================================== */
 function renderLogin() {
-  const opts = [['Administrador', 'Mtro. Carlos Reyes', 'admin@utpuebla.edu.mx', 'Control total, incluidos periodos, usuarios y permisos.'],
-    ['Coordinador de carrera', 'Ing. Laura Medina Ortiz', 'coordinacion@utpuebla.edu.mx', 'Gestiona alumnos, asesores, asignaciones y empresas.'],
-    ['Consulta', 'Lic. Sofía Herrera Luna', 'consulta@utpuebla.edu.mx', 'Solo consulta información y estadísticas.']];
   $('#root').innerHTML = `<div class="login"><form class="login-card" id="loginForm">
     <div class="login-top"><a class="logo" href="#/"><span class="logo-mark">${ic('cap', 20)}</span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a><span class="chip mod2"><span class="n">2</span>Administración</span></div>
-    <div><h1 style="font-size:1.5rem;font-weight:800">Entrar al panel</h1><p class="muted small" style="margin-top:4px">Elige un usuario de demostración o escribe tu correo. La contraseña de los tres es demo1234.</p></div>
-    <fieldset class="role-opts" style="border:0;padding:0;margin:0"><legend class="field" style="margin-bottom:8px">Usuarios de demostración</legend>
-    ${opts.map((o, i) => `<label class="role-opt"><input type="radio" name="demo" value="${o[2]}" ${i === 0 ? 'checked' : ''}><div><b>${o[0]}</b><span>${o[1]}. ${o[3]}</span></div></label>`).join('')}
-    </fieldset>
-    <label class="field">Correo institucional<input type="email" id="lemail" name="email" value="${opts[0][2]}" autocomplete="username" required></label>
-    <label class="field">Contraseña<input type="password" name="password" value="demo1234" autocomplete="current-password" required></label>
-    <button class="btn block" type="submit">Entrar</button>
-    <div class="login-links"><a href="#/">Información del módulo</a><a href="/portal/index.html">${ic('arrowL', 14)}Portal SIGEP</a></div>
+    <div><h1 style="font-size:1.5rem;font-weight:800">Entrar al panel</h1><p class="muted small" style="margin-top:4px">Para el personal de coordinación. Usa tu cuenta de SIGEP; si ya entraste a otro módulo, entras directo.</p></div>
+    <label class="field">Correo institucional<input type="email" id="lemail" name="email" autocomplete="username" required></label>
+    <label class="field">Contraseña<input type="password" name="password" autocomplete="current-password" required></label>
+    <button class="btn block" type="submit" id="lentrar">Entrar</button>
+    <div class="login-links"><a href="#/">Información del módulo</a><a href="../index.html">${ic('arrowL', 14)}Portal SIGEP</a></div>
   </form></div>`;
-  document.querySelectorAll('input[name=demo]').forEach((r) => (r.onchange = () => ($('#lemail').value = r.value)));
   $('#loginForm').onsubmit = async (e) => {
     e.preventDefault();
-    const f = new FormData(e.target);
+    const f = new FormData(e.target), boton = $('#lentrar');
+    boton.disabled = true;
     try {
-      const r = await api('POST', '/login', { email: f.get('email'), password: f.get('password') });
-      SESION = r.usuario; guardarSesion(SESION); S = null; guardarTokenBD(SESION.token);
+      SESION = await M2.entrar(f.get('email'), f.get('password'));
+      S = null; guardarTokenBD(true);
       go('#/app/dashboard');
     } catch (err) { toast(err.message); }
+    finally { boton.disabled = false; }
   };
   window.scrollTo(0, 0);
 }
@@ -505,7 +496,7 @@ function renderApp(view) {
     <nav class="side-nav">${menu.map(([k, n, i, , c, alerta]) => `<a href="#/app/${k}" ${k === view ? 'aria-current="page"' : ''}>${ic(i)}${n}${c ? `<span class="count ${alerta ? 'alert' : ''}">${c}</span>` : ''}</a>`).join('')}</nav>
     <div class="side-foot">
       <div class="cycle-card"><small>PERIODO ACTIVO</small><b>${esc(p.nombre)}</b><div class="bar"><i style="width:${pct(sem.actual, sem.total)}%"></i></div><span class="mono">Semana ${sem.actual} de ${sem.total}</span></div>
-      <a class="side-link" href="/portal/index.html">${ic('arrowL')}Portal SIGEP</a>
+      <a class="side-link" href="../index.html">${ic('arrowL')}Portal SIGEP</a>
       <button class="side-out" data-act="logout">${ic('logout')}Cerrar sesión</button>
     </div>
   </aside>
@@ -577,7 +568,7 @@ function vDash() {
     <section class="dark-card"><div class="lbl">PERIODO ACTIVO</div><div style="font-size:1.35rem;font-weight:800">${esc(p.nombre)}</div>
       <div class="bar"><i style="width:${pct(sem.actual, sem.total)}%"></i></div>
       <div class="foot"><span>Inicio ${fmt(p.inicio)}</span><span>Semana ${sem.actual}/${sem.total}</span><span>Fin ${fmt(p.fin)}</span></div>
-      <dl class="dk"><div><dt>Alumnos</dt><dd>${alumnos.length}</dd></div><div><dt>Con asesor</dt><dd>${pct(alumnos.filter((a) => asgDe(a)).length, alumnos.length)}%</dd></div><div><dt>Expedientes completos</dt><dd>${alumnos.filter((a) => aprob(a) === 5).length}</dd></div></dl>
+      <dl class="dk"><div><dt>Alumnos</dt><dd>${alumnos.length}</dd></div><div><dt>Con asesor</dt><dd>${pct(alumnos.filter((a) => asgDe(a)).length, alumnos.length)}%</dd></div><div><dt>Expedientes completos</dt><dd>${alumnos.filter((a) => aprob(a) === DOCS.length).length}</dd></div></dl>
       ${can('periodos.ver') ? '<a class="btn sm out" href="#/app/periodos" style="justify-self:start">Ver periodos</a>' : ''}
     </section>
   </div></div>`;
@@ -593,7 +584,7 @@ function filtrarAlumnos() {
     && (!f.carrera || a.carrera === f.carrera) && (!f.grupo || a.grupo === f.grupo) && (!f.estado || a.estado === f.estado)
     && (!f.empresa || (f.empresa === 'sin' ? !a.empresa_id : a.empresa_id === f.empresa)));
   if (f.asesor) l = l.filter((a) => { const g = asgDe(a); return f.asesor === 'sin' ? !g : f.asesor === 'con' ? !!g : g?.asesor_id === f.asesor; });
-  if (f.exp) l = l.filter((a) => (f.exp === 'completo' ? aprob(a) === 5 : f.exp === 'rechazado' ? Object.values(a.expediente).includes('rechazado') : aprob(a) < 5));
+  if (f.exp) l = l.filter((a) => (f.exp === 'completo' ? aprob(a) === DOCS.length : f.exp === 'rechazado' ? Object.values(a.expediente).includes('rechazado') : aprob(a) < DOCS.length));
   const key = { nombre: (a) => a.nombre, matricula: (a) => a.matricula, carrera: (a) => a.carrera + a.grupo, empresa: (a) => em(a.empresa_id)?.nombre || '~', asesor: (a) => asesorDe(a)?.nombre || '~', exp: (a) => aprob(a) }[f.sort];
   return l.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'es')) * f.dir; });
 }
@@ -639,7 +630,7 @@ function vAlumnos() {
       <div class="who"><input type="checkbox" class="ck" data-act="sel" data-id="${a.id}" ${f.sel.has(a.id) ? 'checked' : ''} aria-label="Seleccionar ${esc(a.nombre)}"><span class="avatar">${ini(a.nombre)}</span><div style="min-width:0"><b>${esc(a.nombre)}</b><span class="mono">${a.matricula} · ${a.carrera} ${a.grupo}</span></div></div>
       <div><span class="cell-l">Empresa</span>${e ? esc(e.nombre) : '<span class="muted">Sin empresa</span>'}</div>
       <div><span class="cell-l">Asesor</span>${t ? esc(t.nombre) : '<span class="chip warn">Sin asesor</span>'}</div>
-      <div><span class="cell-l">Expediente</span><div style="display:flex;gap:8px;align-items:center">${dots(a)}<span class="mono">${aprob(a)}/5</span></div></div>
+      <div><span class="cell-l">Expediente</span><div style="display:flex;gap:8px;align-items:center">${dots(a)}<span class="mono">${aprob(a)}/${DOCS.length}</span></div></div>
       <div><span class="cell-l">Estado</span>${chip(EST_AL[a.estado])}</div>
       <div>${editar ? `<button class="ibtn" data-act="alForm" data-id="${a.id}" aria-label="Editar ${esc(a.nombre)}">${ic('edit', 15)}</button>` : ''}</div>
     </div>`; }).join('') || '<div class="empty">Ningún alumno coincide con la búsqueda o los filtros.<br><button class="linkbtn" data-act="limpiarFiltros">Limpiar filtros</button></div>'}
@@ -707,7 +698,7 @@ function vAsignaciones() {
     <section class="card"><div class="card-h"><h2>Alumnos sin asesor</h2><span class="chip ${pend.length ? 'warn' : 'ok'}">${pend.length}</span></div>
       <div class="search" style="margin-bottom:10px">${ic('search', 16)}<input type="search" id="q-ag" placeholder="Buscar alumno sin asesor" value="${esc(f.q)}" aria-label="Buscar alumno sin asesor"></div>
       ${pend.length ? `<label class="ckall"><input type="checkbox" class="ck" data-act="agTodos" ${todos ? 'checked' : ''}>Seleccionar todos (${pend.length})</label>` : ''}
-      <div class="rows scrollbox">${pend.map((a) => `<label class="r pick"><input type="checkbox" class="ck" data-act="agSel" data-id="${a.id}" ${f.sel.has(a.id) ? 'checked' : ''} ${editar ? '' : 'disabled'}><div class="grow"><b>${esc(a.nombre)}</b><span class="muted">${a.matricula} · ${CARRERAS[a.carrera]} · ${esc(em(a.empresa_id)?.nombre || 'Sin empresa')}</span></div></label>`).join('') || '<p class="muted small" style="padding:10px 0">Todos los alumnos activos tienen asesor.</p>'}</div>
+      <div class="rows scrollbox">${pend.map((a) => `<label class="r pick"><input type="checkbox" class="ck" data-act="agSel" data-id="${a.id}" ${f.sel.has(a.id) ? 'checked' : ''} ${editar ? '' : 'disabled'}><div class="grow"><b>${esc(a.nombre)}</b><span class="muted">${a.matricula} · ${carreraDe(a.carrera)} · ${esc(em(a.empresa_id)?.nombre || 'Sin empresa')}</span></div></label>`).join('') || '<p class="muted small" style="padding:10px 0">Todos los alumnos activos tienen asesor.</p>'}</div>
       ${editar && pend.length ? `<div class="assign-bar"><select id="agAsesor" aria-label="Asesor">${asesorOptions(f.asesor, carreraComun(f.sel) || f.carrera, p.id, 'Elige un asesor')}</select>
         <button class="btn sm" data-act="agAsignar" ${f.sel.size ? '' : 'disabled'}>Asignar ${f.sel.size ? plural(f.sel.size, 'alumno') : 'seleccionados'}</button></div>` : ''}
     </section>
@@ -738,7 +729,7 @@ function vPeriodos() {
     return `<article class="pcard ${p.estado}"><div class="card-h" style="margin-bottom:6px"><div><h2>${esc(p.nombre)}</h2><span class="mono">Clave ${esc(p.clave)}</span></div>${chip(EST_PER[p.estado])}</div>
       <p class="muted small">${fmt(p.inicio)} al ${fmt(p.fin)} · ${sem.total} semanas</p>
       ${p.estado === 'activo' ? `<div class="bar-row" style="margin:12px 0 4px"><div class="lbl">Avance del periodo<span>Semana ${sem.actual} de ${sem.total}</span></div><div class="bar"><i style="width:${pct(sem.actual, sem.total)}%"></i></div></div>` : ''}
-      <dl class="pstats"><div><dt>Alumnos</dt><dd>${l.length}</dd></div><div><dt>Con asesor</dt><dd>${pct(con, l.length)}%</dd></div><div><dt>Expedientes completos</dt><dd>${pct(l.filter((a) => aprob(a) === 5).length, l.length)}%</dd></div></dl>
+      <dl class="pstats"><div><dt>Alumnos</dt><dd>${l.length}</dd></div><div><dt>Con asesor</dt><dd>${pct(con, l.length)}%</dd></div><div><dt>Expedientes completos</dt><dd>${pct(l.filter((a) => aprob(a) === DOCS.length).length, l.length)}%</dd></div></dl>
       ${editar ? `<div class="row-actions"><button class="btn xs out" data-act="peForm" data-id="${p.id}">${ic('edit', 14)}Editar</button>
         ${p.estado !== 'activo' ? `<button class="btn xs" data-act="peEstado" data-id="${p.id}" data-e="activo">Activar</button>` : `<button class="btn xs out" data-act="peEstado" data-id="${p.id}" data-e="cerrado">Cerrar periodo</button>`}
         ${p.estado === 'cerrado' ? `<button class="btn xs out" data-act="peEstado" data-id="${p.id}" data-e="planeado">Reabrir</button>` : ''}
@@ -798,7 +789,7 @@ function vExpedientes() {
     <div class="trow head"><span>Alumno</span><span>Asesor</span><span>Documentos</span><span>Avance</span><span>Estado</span></div>
     ${l.slice(0, 60).map((a) => `<div class="trow click" data-act="alDetalle" data-id="${a.id}" tabindex="0"><div class="who"><span class="avatar">${ini(a.nombre)}</span><div style="min-width:0"><b>${esc(a.nombre)}</b><span class="mono">${a.matricula} · ${a.carrera}</span></div></div>
       <div><span class="cell-l">Asesor</span>${esc(asesorDe(a)?.nombre || 'Sin asesor')}</div><div><span class="cell-l">Documentos</span>${dots(a)}</div>
-      <div><span class="cell-l">Avance</span><div style="display:flex;gap:8px;align-items:center"><div class="bar" style="width:60px"><i style="width:${aprob(a) * 20}%"></i></div><span class="mono">${aprob(a) * 20}%</span></div></div><div><span class="cell-l">Estado</span>${chip(estExp(a))}</div></div>`).join('') || '<div class="empty">Ningún expediente coincide con los filtros.</div>'}
+      <div><span class="cell-l">Avance</span><div style="display:flex;gap:8px;align-items:center"><div class="bar" style="width:60px"><i style="width:${pct(aprob(a), DOCS.length)}%"></i></div><span class="mono">${pct(aprob(a), DOCS.length)}%</span></div></div><div><span class="cell-l">Estado</span>${chip(estExp(a))}</div></div>`).join('') || '<div class="empty">Ningún expediente coincide con los filtros.</div>'}
     <div class="pager"><span>${plural(l.length, 'expediente')}${l.length > 60 ? ' · se muestran los primeros 60; usa los filtros para acotar' : ''}</span></div>
   </div></div>`;
 }
@@ -845,18 +836,17 @@ function vPerfil() {
       <label class="field">Contraseña actual<input type="password" name="actual" required autocomplete="current-password"></label>
       <label class="field">Nueva contraseña <span class="hint">Mínimo 8 caracteres</span><input type="password" name="nueva" minlength="8" required autocomplete="new-password"></label>
       <button class="btn sm" type="submit" style="justify-self:start">Guardar contraseña</button></form>
-    ${can('usuarios.editar') ? `<section class="card"><div class="card-h"><h2>Demostración</h2></div><p class="muted small" style="margin-bottom:12px">Vuelve a los datos de ejemplo del servidor (alumnos, asesores, empresas, periodos y usuarios). Afecta a todos los usuarios conectados.</p><button class="btn sm out" data-act="reset">Restablecer datos de ejemplo</button></section>` : ''}
   </div>`;
 }
 
 /* =====================================================================
    VISTA: Caché sin conexión (métodos de la API Cache desde la página)
    ===================================================================== */
-const CACHE_NOMBRES = { shell: 'sigep-shell-v6', dinamica: 'sigep-dinamica-v1', datos: 'sigep-datos-v1' };
+const CACHE_NOMBRES = { shell: 'sigep-m2-shell-v7', dinamica: 'sigep-m2-dinamica-v1', datos: M2.CACHE_DATOS };
 const CACHE_INFO = {
-  'sigep-shell-v6': ['App Shell', 'Cache First', 'Archivos base del panel: HTML, CSS, JavaScript, manifiesto e íconos. Se guardan al instalar el Service Worker.'],
-  'sigep-dinamica-v1': ['Recursos dinámicos', 'Stale-While-Revalidate', 'Imágenes, video y tipografías. Responde con la copia guardada y la actualiza en segundo plano. Máximo 40 archivos.'],
-  'sigep-datos-v1': ['Datos de la API', 'Network First', 'Última respuesta de /api/estado, /api/version y /api/radar para consultar el panel sin conexión. Se borra al cerrar sesión.']
+  'sigep-m2-shell-v7': ['App Shell', 'Cache First', 'Archivos base del panel: HTML, CSS, JavaScript, manifiesto e íconos. Se guardan al instalar el Service Worker.'],
+  'sigep-m2-dinamica-v1': ['Recursos dinámicos', 'Stale-While-Revalidate', 'Imágenes, video y tipografías. Responde con la copia guardada y la actualiza en segundo plano. Máximo 40 archivos.'],
+  'sigep-m2-datos-v1': ['Datos del panel', 'Network First', 'Última copia de los datos leídos de Supabase (datos/estado.json) para consultar el panel sin conexión. Se borra al cerrar sesión.']
 };
 const RECURSOS_OFFLINE = ['./img/dashboard.jpg', './img/alumnos-filtros.jpg', './img/asignaciones.jpg', './img/permisos.jpg', './img/panel-movil.jpg', './media/recorrido-modulo2.mp4'];
 const fechaHora = (iso) => new Date(iso).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(/\./g, '');
@@ -879,7 +869,7 @@ function describir(r) {
   return String(r);
 }
 async function leerFechaDatos() {
-  try { const r = await caches.match('/api/estado'); UI.ca.fechaDatos = r ? r.headers.get('sw-fecha') : null; } catch (e) {}
+  try { const r = await caches.match(M2.URL_DATOS); UI.ca.fechaDatos = r ? r.headers.get('sw-fecha') : null; } catch (e) {}
 }
 function versionSW() {
   return new Promise((ok) => {
@@ -1007,13 +997,12 @@ async function cacheDescargar() {
 }
 async function cacheActualizarDatos() {
   try {
-    const r = await op("fetch('/api/estado')", () => fetch('/api/estado', { headers: { Authorization: 'Bearer ' + SESION.token }, cache: 'no-store' }));
-    if (!r.ok) throw new Error('El servidor respondió ' + r.status);
+    const r = await op('Supabase: leer los datos del panel', () => M2.pedir('GET', '/estado'));
+    if (r.sinConexion) throw new Error('Sin conexión: no se pueden descargar datos nuevos');
     const cache = await op(`caches.open('${CACHE_NOMBRES.datos}')`, () => caches.open(CACHE_NOMBRES.datos));
-    const headers = new Headers(r.headers); headers.set('sw-fecha', new Date().toISOString());
-    const copia = new Response(await r.clone().blob(), { status: r.status, headers });
-    await op("cache.put('/api/estado', respuesta)", () => cache.put('/api/estado', copia));
-    setEstado(await r.json());
+    const copia = new Response(JSON.stringify(r), { headers: { 'Content-Type': 'application/json', 'sw-fecha': new Date().toISOString() } });
+    await op("cache.put('datos/estado.json', respuesta)", () => cache.put(M2.URL_DATOS, copia));
+    setEstado(r);
     toast('Datos actualizados y guardados en la caché');
   } catch (e) { toast(navigator.onLine ? e.message : 'Sin conexión: no se pueden descargar datos nuevos'); }
   await leerFechaDatos();
@@ -1048,19 +1037,21 @@ function confirmar(titulo, texto, boton, fn) {
 const opts = (obj, sel) => Object.entries(obj).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${Array.isArray(v) ? v[0] : v}</option>`).join('');
 
 function alForm(id) {
-  const a = id ? al(id) : { matricula: '', nombre: '', email: '', telefono: '', carrera: 'ISC', grupo: 'A', periodo_id: activo().id, empresa_id: '', proyecto: '', estado: 'activo' };
+  const a = id ? al(id) : { matricula: '', nombre: '', email: '', nivel: 'Ingeniería', telefono: '', carrera: 'ISC', grupo: 'A', periodo_id: activo().id, empresa_id: '', proyecto: '', estado: 'activo' };
   const t = id ? asesorDe(a) : null;
   modal(`${mHead(id ? 'Editar alumno' : 'Registrar alumno', id ? a.matricula : '')}
   <form class="stack" data-form="alumno" data-id="${id || ''}" style="gap:12px" novalidate>
     <div class="form-grid">
-      <label class="field">Matrícula<input name="matricula" value="${esc(a.matricula)}" required maxlength="15" placeholder="21ISC070" autocapitalize="characters"></label>
+      <label class="field">Matrícula <span class="hint">10 dígitos</span><input name="matricula" value="${esc(a.matricula)}" required maxlength="10" inputmode="numeric" placeholder="2311081277"></label>
       <label class="field">Nombre completo<input name="nombre" value="${esc(a.nombre)}" required maxlength="90"></label>
-      <label class="field">Correo<input type="email" name="email" value="${esc(a.email)}" required maxlength="90"></label>
+      <label class="field">Correo ${id ? '<span class="hint">Es su cuenta de SIGEP</span>' : ''}<input type="email" name="email" value="${esc(a.email)}" required maxlength="90" ${id ? 'readonly' : ''}></label>
+      <label class="field">Nivel<select name="nivel">${opts(NIVELES, a.nivel)}</select></label>
       <label class="field">Teléfono<input type="tel" name="telefono" value="${esc(a.telefono)}" maxlength="20"></label>
       <label class="field">Carrera<select name="carrera" id="fCarrera">${opts(CARRERAS, a.carrera)}</select></label>
       <label class="field">Grupo<input name="grupo" value="${esc(a.grupo)}" required maxlength="3"></label>
       <label class="field">Periodo<select name="periodo_id">${S.periodos.map((p) => `<option value="${p.id}" ${p.id === a.periodo_id ? 'selected' : ''}>${esc(p.nombre)}${p.estado === 'activo' ? ' (activo)' : ''}</option>`).join('')}</select></label>
       <label class="field">Estado<select name="estado">${opts(EST_AL, a.estado)}</select></label>
+      ${id ? '' : '<label class="field">Contraseña inicial <span class="hint">Mínimo 8 caracteres; el alumno la cambia después</span><input type="password" name="password" minlength="8" required autocomplete="new-password"></label>'}
     </div>
     <label class="field">Empresa<select name="empresa_id"><option value="">Sin empresa por ahora</option>${[...S.empresas].sort((x, y) => x.nombre.localeCompare(y.nombre)).map((e) => `<option value="${e.id}" ${e.id === a.empresa_id ? 'selected' : ''}>${esc(e.nombre)} · ${convEst(e)[0].toLowerCase()}</option>`).join('')}</select></label>
     <label class="field">Proyecto<input name="proyecto" value="${esc(a.proyecto)}" maxlength="140" placeholder="Nombre del proyecto de estadía"></label>
@@ -1070,12 +1061,12 @@ function alForm(id) {
 }
 function alDetalle(id) {
   const a = al(id), t = asesorDe(a), e = em(a.empresa_id), pc = e && principal(e.id), g = asgDe(a);
-  modal(`${mHead(esc(a.nombre), `${a.matricula} · ${CARRERAS[a.carrera]} · Grupo ${a.grupo}`)}
+  modal(`${mHead(esc(a.nombre), `${a.matricula} · ${carreraDe(a.carrera)} · Grupo ${a.grupo}`)}
   <div class="detail-grid">
     <div><h3>Datos</h3><dl class="kv"><dt>Periodo</dt><dd>${esc(per(a.periodo_id)?.nombre)}</dd><dt>Estado</dt><dd>${chip(EST_AL[a.estado])}</dd><dt>Correo</dt><dd>${esc(a.email)}</dd><dt>Teléfono</dt><dd>${esc(a.telefono || '—')}</dd><dt>Proyecto</dt><dd>${esc(a.proyecto || '—')}</dd></dl></div>
     <div><h3>Asesor y empresa</h3><dl class="kv"><dt>Asesor</dt><dd>${t ? `${esc(t.nombre)}<span class="mono" style="display:block">${TIPO_ASG[g.tipo]} · ${fmt(g.fecha)}</span>` : '<span class="chip warn">Sin asesor</span>'}</dd><dt>Empresa</dt><dd>${e ? `${esc(e.nombre)} ${chip(convEst(e))}` : '<span class="muted">Sin empresa</span>'}</dd>${pc ? `<dt>Contacto</dt><dd>${esc(pc.nombre)}<span class="mono" style="display:block">${esc(pc.telefono)} · ${esc(pc.email)}</span></dd>` : ''}</dl></div>
   </div>
-  <div><h3 style="margin-bottom:8px">Expediente <span class="mono">${aprob(a)}/5 aprobados</span></h3><div class="rows">${DOCS.map(([k, n]) => `<div class="r"><div class="grow"><b>${n}</b></div>${chip(EST_DOC[a.expediente[k]])}</div>`).join('')}</div>
+  <div><h3 style="margin-bottom:8px">Expediente <span class="mono">${aprob(a)}/${DOCS.length} aprobados</span></h3><div class="rows">${DOCS.map(([k, n]) => `<div class="r"><div class="grow"><b>${n}</b></div>${chip(EST_DOC[a.expediente[k]])}</div>`).join('')}</div>
   <p class="mono" style="margin-top:8px">Los documentos se suben y revisan en el Módulo 1.</p></div>
   <div class="modal-f">${can('alumnos.editar') ? `<button class="btn out" data-act="alForm" data-id="${a.id}">${ic('edit', 15)}Editar</button>` : ''}<button class="btn" data-act="closeModal">Cerrar</button></div>`, 720);
 }
@@ -1085,11 +1076,12 @@ function asForm(id) {
   <form class="stack" data-form="asesor" data-id="${id || ''}" style="gap:12px" novalidate>
     <div class="form-grid">
       <label class="field">Nombre completo<input name="nombre" value="${esc(t.nombre)}" required maxlength="90" placeholder="Mtra. Ana Pérez López"></label>
-      <label class="field">Correo<input type="email" name="email" value="${esc(t.email)}" required maxlength="90"></label>
+      <label class="field">Correo ${id ? '<span class="hint">Es su cuenta de SIGEP</span>' : ''}<input type="email" name="email" value="${esc(t.email)}" required maxlength="90" ${id ? 'readonly' : ''}></label>
       <label class="field">Teléfono<input type="tel" name="telefono" value="${esc(t.telefono)}" maxlength="20"></label>
       <label class="field">Carrera que atiende<select name="carrera">${opts(CARRERAS, t.carrera)}</select></label>
       <label class="field">Capacidad <span class="hint">Máximo de alumnos por periodo</span><input type="number" name="capacidad" min="1" max="30" value="${t.capacidad}" required></label>
       <label class="field">Estado<select name="activo"><option value="true" ${t.activo ? 'selected' : ''}>Activo</option><option value="false" ${t.activo ? '' : 'selected'}>Inactivo</option></select></label>
+      ${id ? '' : '<label class="field">Contraseña inicial <span class="hint">Mínimo 8 caracteres</span><input type="password" name="password" minlength="8" required autocomplete="new-password"></label>'}
     </div>
     ${id ? `<p class="mono">Carga actual en el periodo activo: ${carga(id)} alumnos</p>` : ''}
     <div class="modal-f">${id ? `<button type="button" class="btn out danger" data-act="asBorrar" data-id="${id}" style="margin-right:auto">${ic('trash', 15)}Eliminar</button>` : ''}<button type="button" class="btn out" data-act="closeModal">Cancelar</button><button class="btn" type="submit">${id ? 'Guardar cambios' : 'Registrar asesor'}</button></div>
@@ -1167,9 +1159,11 @@ function coForm(empresaId, id) {
   </form>`, 600);
 }
 function renovarForm(id) {
-  const e = em(id), sug = '2026-04-14';
+  const e = em(id);
+  const unAnio = new Date(HOY + 'T12:00:00'); unAnio.setFullYear(unAnio.getFullYear() + 1);
+  const sug = unAnio.toISOString().slice(0, 10), manana = new Date(new Date(HOY + 'T12:00:00').getTime() + 864e5).toISOString().slice(0, 10);
   modal(`${mHead(e.convenio === 'tramite' ? 'Marcar convenio como firmado' : 'Renovar convenio', esc(e.nombre))}
-  <form class="stack" data-form="renovar" data-id="${id}" style="gap:12px"><label class="field">Vigente hasta<input type="date" name="vence" value="${sug}" min="2025-04-15" required></label>
+  <form class="stack" data-form="renovar" data-id="${id}" style="gap:12px"><label class="field">Vigente hasta<input type="date" name="vence" value="${sug}" min="${manana}" required></label>
   <div class="modal-f"><button type="button" class="btn out" data-act="closeModal">Cancelar</button><button class="btn" type="submit">Guardar</button></div></form>`, 460);
 }
 function usForm(id) {
@@ -1178,7 +1172,7 @@ function usForm(id) {
   <form class="stack" data-form="usuario" data-id="${id || ''}" style="gap:12px" novalidate>
     <div class="form-grid">
       <label class="field">Nombre<input name="nombre" value="${esc(u.nombre)}" required maxlength="90"></label>
-      <label class="field">Correo institucional<input type="email" name="email" value="${esc(u.email)}" required maxlength="90"></label>
+      <label class="field">Correo institucional<input type="email" name="email" value="${esc(u.email)}" required maxlength="90" ${id ? 'readonly' : ''}></label>
       <label class="field">Rol<select name="rol_id">${S.roles.map((r) => `<option value="${r.id}" ${r.id === u.rol_id ? 'selected' : ''}>${esc(r.nombre)}</option>`).join('')}</select></label>
       <label class="field">Estado<select name="activo"><option value="true" ${u.activo ? 'selected' : ''}>Activo</option><option value="false" ${u.activo ? '' : 'selected'}>Inactivo</option></select></label>
       ${id ? '' : '<label class="field">Contraseña inicial <span class="hint">Mínimo 8 caracteres</span><input type="password" name="password" minlength="8" required autocomplete="new-password"></label>'}
@@ -1189,7 +1183,7 @@ function usForm(id) {
 function usPass(id) {
   const u = S.usuarios.find((x) => x.id === id);
   modal(`${mHead('Restablecer contraseña', esc(u.nombre))}
-  <form class="stack" data-form="usPass" data-id="${id}" style="gap:12px"><label class="field">Nueva contraseña <span class="hint">Mínimo 8 caracteres. Se cerrarán sus sesiones abiertas.</span><input type="password" name="password" minlength="8" required autocomplete="new-password"></label>
+  <form class="stack" data-form="usPass" data-id="${id}" style="gap:12px"><label class="field">Nueva contraseña <span class="hint">Mínimo 8 caracteres.</span><input type="password" name="password" minlength="8" required autocomplete="new-password"></label>
   <div class="modal-f"><button type="button" class="btn out" data-act="closeModal">Cancelar</button><button class="btn" type="submit">Restablecer</button></div></form>`, 480);
 }
 
@@ -1197,7 +1191,7 @@ function usPass(id) {
 function exportarCSV(soloSel) {
   const l = soloSel ? filtrarAlumnos().filter((a) => UI.al.sel.has(a.id)) : filtrarAlumnos();
   const cols = ['Matrícula', 'Nombre', 'Correo', 'Teléfono', 'Carrera', 'Grupo', 'Periodo', 'Estado', 'Empresa', 'Asesor', 'Documentos aprobados'];
-  const fila = (a) => [a.matricula, a.nombre, a.email, a.telefono, CARRERAS[a.carrera], a.grupo, per(a.periodo_id)?.nombre, EST_AL[a.estado][0], em(a.empresa_id)?.nombre || '', asesorDe(a)?.nombre || '', `${aprob(a)}/5`];
+  const fila = (a) => [a.matricula, a.nombre, a.email, a.telefono, carreraDe(a.carrera), a.grupo, per(a.periodo_id)?.nombre, EST_AL[a.estado][0], em(a.empresa_id)?.nombre || '', asesorDe(a)?.nombre || '', `${aprob(a)}/${DOCS.length}`];
   const csv = [cols, ...l.map(fila)].map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
   const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
   const link = document.createElement('a'); link.href = url; link.download = `alumnos-${activo().clave}.csv`; link.click();
@@ -1222,11 +1216,10 @@ document.addEventListener('click', (e) => {
     case 'openMenu': UI.menu = true; $('#side').classList.add('open'); document.querySelector('.scrim').classList.add('show'); break;
     case 'closeMenu': UI.menu = false; $('#side').classList.remove('open'); document.querySelector('.scrim').classList.remove('show'); break;
     case 'pop': UI.pop = UI.pop === d.pop ? null : d.pop; rerender(); break;
-    case 'logout': api('POST', '/logout').catch(() => {}); if ('caches' in window) caches.delete(CACHE_NOMBRES.datos); cerrarSesion(); go('#/'); break;
+    case 'logout': M2.salir().catch(() => {}); cerrarSesion(); go('#/'); break;
     case 'closeModal': closeModal(); break;
     case 'confirmarOk': { const fn = CONFIRMAR; CONFIRMAR = null; fn && fn(); break; }
     case 'ir': e.preventDefault(); UI.pop = null; if (d.f) { const [path, v] = d.f.split(':'); if (path.startsWith('al.')) { limpiarAl(); UI.al.estado = 'activo'; UI.al.filtros = true; } setFiltro(path, v); } closeModal(); if (location.hash === d.to) rerender(); else go(d.to); break;
-    case 'reset': confirmar('Restablecer datos de ejemplo', 'Se reemplazarán todos los datos del servidor por los de ejemplo. Afecta a todos los usuarios conectados.', 'Restablecer', () => accion('POST', '/reset')); break;
     case 'page': UI[d.k].page += +d.d; rerender(); break;
     // Alumnos
     case 'toggleFiltros': UI.al.filtros = !UI.al.filtros; rerender(); break;
@@ -1349,8 +1342,13 @@ function abrirBD() {
   });
 }
 const pedirBD = (req) => new Promise((ok, mal) => { req.onsuccess = () => ok(req.result); req.onerror = () => mal(req.error); });
-async function guardarTokenBD(token) {
-  try { const bd = await abrirBD(); const st = bd.transaction('sesion', 'readwrite').objectStore('sesion'); await pedirBD(token ? st.put(token, 'token') : st.delete('token')); } catch (e) {}
+// Guarda (o borra) lo que necesita el Service Worker para enviar la cola: token de la sesión, URL y clave publicable
+async function guardarTokenBD(activa) {
+  try {
+    const datos = activa ? await M2.credenciales() : null;
+    const bd = await abrirBD(); const st = bd.transaction('sesion', 'readwrite').objectStore('sesion');
+    await pedirBD(datos ? st.put(datos, 'credenciales') : st.delete('credenciales'));
+  } catch (e) {}
 }
 async function leerCola() {
   try { const bd = await abrirBD(); UI.ra.cola = await pedirBD(bd.transaction('cola').objectStore('cola').getAll()); } catch (e) { UI.ra.cola = []; }
@@ -1409,7 +1407,7 @@ async function activarPush() {
     const { clave } = await api('GET', '/push/clave');
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ABytes(clave) });
-    await api('POST', '/push/suscribir', { suscripcion: sub.toJSON(), dispositivo: navigator.userAgentData?.platform || navigator.platform || '' });
+    await M2.suscribirPush(sub);
     toast('Alertas activadas en este dispositivo');
   } catch (e) {
     toast('No se pudo activar: ' + (e.name === 'NotAllowedError' ? 'el navegador no lo permite aquí (en modo incógnito Chrome no admite notificaciones push)'
@@ -1420,7 +1418,7 @@ async function activarPush() {
 async function desactivarPush() {
   try {
     const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
-    if (sub) { await api('DELETE', '/push/suscribir', { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); }
+    if (sub) { await M2.quitarPush(sub.endpoint).catch(() => {}); await sub.unsubscribe(); }
     toast('Alertas desactivadas en este dispositivo');
   } catch (e) { toast(e.message); }
   await revisarPush(); rerender();
@@ -1432,7 +1430,7 @@ async function probarPush() {
     // Sin suscripción (o sin internet hacia el servicio de push): se muestra una notificación local para la demostración
     if (Notification.permission === 'granted') {
       const reg = await navigator.serviceWorker.ready, R = RADAR();
-      await reg.showNotification('Alerta de prueba · Radar de Estadías', { body: `${R.conteo.alto} alumnos en riesgo alto y ${R.conteo.medio} en seguimiento.`, icon: './icons/icon-192.png', tag: 'sigep-radar', data: { url: '/#/app/radar' } });
+      await reg.showNotification('Alerta de prueba · Radar de Estadías', { body: `${R.conteo.alto} alumnos en riesgo alto y ${R.conteo.medio} en seguimiento.`, icon: './icons/icon-192.png', tag: 'sigep-radar', data: { url: 'index.html#/app/radar' } });
       toast(r.dispositivos ? 'El servicio de push no respondió; se mostró una notificación local' : 'Este dispositivo no está suscrito; se mostró una notificación local');
     } else toast('Primero activa las alertas en este dispositivo');
   } catch (e) { toast(e.message); }
@@ -1488,7 +1486,7 @@ function vRadar() {
         <div class="sugerida"><b>Acción sugerida</b>${sugerencia(sel)}<div class="row-actions">${enCola.has(sel.id) ? `<span class="chip warn">${ic('clock', 12)}En cola: se enviará al reconectar</span>` : boton(sel)}<button class="btn xs out" data-ra="ver" data-id="${sel.id}">Ver expediente</button></div></div>
       </section>` : ''}
       <section class="card"><div class="card-h"><h2>Alertas en este dispositivo</h2><span class="chip ${pu.suscrito ? 'ok' : ''}">${pu.suscrito ? 'Activas' : 'Inactivas'}</span></div>
-        <p class="muted small">Recibe un aviso cuando un alumno pase a riesgo alto y un resumen diario a las 7:00 a. m., aunque el panel esté cerrado. El número de alumnos en rojo aparece sobre el ícono de la app instalada.</p>
+        <p class="muted small">Recibe un aviso cuando un alumno pase a riesgo alto, aunque el panel esté cerrado. El número de alumnos en rojo aparece sobre el ícono de la app instalada.</p>
         ${!pu.soporte ? `<p class="small" style="margin-top:10px">${pu.ios && !pu.instalada ? 'En iPhone las notificaciones funcionan con la app instalada: <b>Compartir → Agregar a inicio</b>.' : 'Este navegador no admite notificaciones push.'}</p>` : ''}
         ${pu.permiso === 'denied' ? '<p class="small" style="margin-top:10px;color:var(--red)">Bloqueaste las notificaciones para este sitio. Actívalas desde el candado de la barra de direcciones.</p>' : ''}
         <div class="row-actions" style="margin-top:12px">${pu.suscrito ? `<button class="btn sm" data-ra="prueba">Enviar alerta de prueba</button><button class="btn sm out" data-ra="desactivar">Desactivar</button>` : `<button class="btn sm" data-ra="activar" ${pu.soporte ? '' : 'disabled'}>Activar alertas</button>`}</div>
@@ -1532,7 +1530,7 @@ document.addEventListener('click', (e) => {
 window.addEventListener('online', () => setTimeout(enviarCola, 800));
 leerCola();
 revisarPush();
-if (SESION) guardarTokenBD(SESION.token);
+M2.alCambiarSesion(() => { if (SESION) guardarTokenBD(true); });
 
 /* ============ PWA: Service Worker, instalación y conexión ============ */
 let installPrompt = null;
@@ -1551,5 +1549,12 @@ window.addEventListener('offline', async () => { await leerFechaDatos(); rerende
 window.addEventListener('online', () => { rerender(); toast('Conexión restablecida'); sincronizar(); });
 leerFechaDatos();
 
-route();
-setInterval(sincronizar, 8000);
+// Si ya hay sesión de SIGEP (de este o de otro módulo), entra directo al panel
+M2.sesion()
+  .then((p) => {
+    SESION = p && !p.sinAcceso ? p : null;
+    if (SESION) guardarTokenBD(true);
+    else if (p && p.sinAcceso && location.hash.startsWith('#/app')) { go('#/login'); setTimeout(() => toast('Esta cuenta no pertenece al personal de coordinación.'), 300); }
+  })
+  .catch(() => { SESION = null; })
+  .finally(() => { route(); setInterval(sincronizar, 8000); });
