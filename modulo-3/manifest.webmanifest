@@ -1,10 +1,10 @@
 {
   "id": "./",
-  "name": "SIGEP UTP · Gestión de Estadías",
-  "short_name": "SIGEP UTP",
+  "name": "SIGEP UTP · Módulo 3: Pre-auditoría",
+  "short_name": "Pre-auditoría",
   "description": "Sistema de Gestión de Estadías de la UTP: pre-auditoría de tesinas, dictámenes, checklist y seguimiento académico en línea y offline.",
   "lang": "es-MX",
-  "start_url": "./Frontend/login.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
@@ -41,7 +41,7 @@
     {
       "name": "Vista del alumno",
       "short_name": "Alumno",
-      "url": "./Frontend/modulo-4.html",
+      "url": "./Frontend/alumno.html",
       "icons": [{ "src": "./img/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]

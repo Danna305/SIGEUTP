@@ -12,7 +12,7 @@
      leer(blob, tipo)            { clase, parrafos, paginas?, docx? }
      normalizar(texto)           minúsculas y sin acentos (para buscar)
 
-   · PDF: se lee con PDF.js (js/vendor/pdfjs, licencia Apache 2.0), que se
+   · PDF: se lee con PDF.js (../js/vendor/pdfjs, compartido; licencia Apache 2.0), que se
      carga solo la primera vez que se necesita.
    · Word (.docx): es un ZIP con XML; se abre con DecompressionStream del
      navegador, sin librerías. Los .doc antiguos no se pueden leer.
@@ -68,8 +68,8 @@ App.documento = (() => {
   async function cargarPdfjs() {
     if (!pdfjs) {
       const base = document.baseURI;
-      pdfjs = await import(new URL('js/vendor/pdfjs/pdf.min.mjs', base).href);
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL('js/vendor/pdfjs/pdf.worker.min.mjs', base).href;
+      pdfjs = await import(new URL('../js/vendor/pdfjs/pdf.min.mjs', base).href);
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL('../js/vendor/pdfjs/pdf.worker.min.mjs', base).href;
     }
     return pdfjs;
   }

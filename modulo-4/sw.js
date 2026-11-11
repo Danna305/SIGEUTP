@@ -31,7 +31,7 @@
 
 importScripts('js/cola.js'); // define ColaTesina
 
-const VERSION = 'v7';
+const VERSION = 'v9';
 const STATIC_CACHE = `estadias-${VERSION}`;
 const FONT_CACHE = 'estadias-fuentes';
 const API_CACHE = 'estadias-api'; // la llena js/cache-api.js
@@ -55,7 +55,7 @@ const PRECACHE = [
   'js/toast.js',
   'js/navigation.js',
   'js/pwa.js',
-  'js/config.js',
+  '../js/config.js', // configuración compartida de SIGEP (raíz del repositorio)
   'js/cache-api.js',
   'js/cola.js',
   'js/push.js',
@@ -70,9 +70,9 @@ const PRECACHE = [
   'js/portal.js',
   'js/alumno.js',
   'js/asesor.js',
-  'js/vendor/supabase.js',
-  'js/vendor/pdfjs/pdf.min.mjs',
-  'js/vendor/pdfjs/pdf.worker.min.mjs',
+  '../js/vendor/supabase.js',
+  '../js/vendor/pdfjs/pdf.min.mjs',
+  '../js/vendor/pdfjs/pdf.worker.min.mjs',
   'icons/icon.svg',
   'icons/favicon-32.png',
   'icons/icon-192.png',
@@ -113,7 +113,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keep = [STATIC_CACHE, FONT_CACHE, API_CACHE];
     const names = await caches.keys();
-    await Promise.all(names.filter((name) => !keep.includes(name)).map((name) => caches.delete(name)));
+    // Solo borra sus versiones viejas: las cachés de los otros módulos de SIGEP
+    // (sigep-modulo-1-…, sigep-preauditoria-…) viven en el mismo dominio
+    await Promise.all(names.filter((name) => name.startsWith('estadias-') && !keep.includes(name)).map((name) => caches.delete(name)));
     // Toma el control de las pestañas abiertas desde ya
     await self.clients.claim();
   })());
@@ -199,14 +201,16 @@ self.addEventListener('push', (event) => {
     badge: 'icons/icon-maskable-192.png',
     tag: aviso.etiqueta || 'tesina',
     lang: 'es-MX',
-    data: { url: aviso.url || './' },
+    data: { url: aviso.url || './', modulo: aviso.modulo || 4 },
   }));
 });
 
 // Al tocar la notificación se abre (o se enfoca) la página indicada
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const destino = new URL(event.notification.data?.url || './', self.registration.scope).href;
+  // La url del aviso es relativa a la carpeta del módulo que lo generó
+  const { url = './', modulo = 4 } = event.notification.data || {};
+  const destino = new URL(url, new URL(`../modulo-${Number(modulo) || 4}/`, self.registration.scope)).href;
   event.waitUntil((async () => {
     const ventanas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const abierta = ventanas.find((v) => v.url.split('#')[0] === destino.split('#')[0]);

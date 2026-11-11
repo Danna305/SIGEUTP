@@ -2,64 +2,127 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Iniciar Sesión · SIGEP UTP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Iniciar sesión · Módulo 1 · SIGEP UTP</title>
+<meta name="description" content="Inicio de sesión del Módulo 1 del SIGEP UTP: expediente digital.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#13213F">
+<link rel="icon" href="img/icon-192.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="css/sigep.css">
+<link rel="stylesheet" href="../css/sigep.css">
 <style>
-    /* Estilos del encabezado (copiados del portal) */
     .wrap{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
     .p-head{background:var(--side);color:#fff;position:sticky;top:0;z-index:30}
     .p-head .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
     .p-head .logo small{color:var(--side-muted)}
-    
-    /* Estilos para centrar el login debajo del encabezado */
-    body { background: var(--bg); display: flex; flex-direction: column; min-height: 100vh; }
+    .p-head .p-nav a{color:var(--side-text);display:inline-flex;align-items:center;min-height:44px}
+
+    body { background: var(--bg); display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
     .login-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .login-container { background: var(--surface); border-radius: var(--r-lg); box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1); width: 100%; max-width: 420px; padding: 40px; border: 1px solid var(--line); }
-    .login-header { text-align: center; margin-bottom: 30px; }
+    .login-container { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--sombra-pop); width: 100%; max-width: 420px; padding: 36px; border: 1px solid var(--line); }
+    .login-header { text-align: center; margin-bottom: 26px; }
     .login-header h1 { font-size: 1.6rem; margin-bottom: 5px; color: var(--text); }
     .login-header p { color: var(--muted); font-size: 0.9rem; }
-    .form-group { margin-bottom: 20px; }
+    .form-group { margin-bottom: 18px; }
     .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-    .form-group input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-sm); font-family: inherit; font-size: 0.95rem; }
+    .form-group input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-sm); font: inherit; font-size: 16px; background: var(--surface); color: var(--text); }
     .form-group input:focus { outline: 2px solid var(--m1); border-color: transparent; }
-    .btn-login { width: 100%; padding: 14px; background: var(--m1); color: white; border: none; border-radius: var(--r-sm); font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1rem; transition: background 0.3s; }
-    .btn-login:hover { background: #be185d; }
+    .btn-login { width: 100%; padding: 14px; background: var(--m1); color: #fff; border: none; border-radius: var(--r-sm); font-weight: 700; cursor: pointer; margin-top: 6px; font-size: 1rem; min-height: 48px; }
+    .btn-login:disabled { opacity: .6; cursor: wait; }
+    .estado { font-size: .88rem; font-weight: 600; min-height: 1.4em; margin-top: 12px; text-align: center; }
+    .estado.bad { color: var(--bad); }
+    .estado.ok { color: var(--ok); }
+    .nota { margin-top: 18px; font-size: .82rem; color: var(--muted); text-align: center; }
+    @media (max-width: 520px) { .login-container { padding: 26px 18px; } }
 </style>
 </head>
 <body data-modulo="1">
-    
-    <!-- ENCABEZADO AZUL OSCURO -->
     <header class="p-head">
       <div class="wrap">
-        <a class="logo" href="portal.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Sistema de Gestión de Estadías</small></span></a>
-        <nav class="p-nav"><a href="portal.html">Volver al portal</a></nav>
+        <a class="logo" href="../index.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Sistema de Gestión de Estadías</small></span></a>
+        <nav class="p-nav"><a href="../index.html">Volver al portal</a></nav>
       </div>
     </header>
 
-    <!-- CONTENEDOR DEL LOGIN -->
-    <div class="login-wrapper">
+    <main class="login-wrapper">
         <div class="login-container">
             <div class="login-header">
-                <h1>Iniciar Sesión</h1>
-                <p>Módulo 1: Expediente Digital</p>
+                <h1>Iniciar sesión</h1>
+                <p>Módulo 1: Expediente digital</p>
             </div>
-            <form onsubmit="event.preventDefault(); window.location.href='modulo-1.html';">
+            <form id="form-login" novalidate>
                 <div class="form-group">
-                    <label>Matrícula</label>
-                    <input type="text" placeholder="Ingresa tu matrícula" required>
+                    <label for="correo">Correo institucional</label>
+                    <input type="email" id="correo" autocomplete="username" placeholder="tu.correo@utpuebla.edu.mx" required>
                 </div>
                 <div class="form-group">
-                    <label>Contraseña</label>
-                    <input type="password" placeholder="Ingresa tu contraseña" required>
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" autocomplete="current-password" placeholder="Tu contraseña" required>
                 </div>
-                <button type="submit" class="btn-login">Ingresar al Módulo</button>
+                <button type="submit" class="btn-login" id="btn-login">Ingresar al módulo</button>
+                <p class="estado" id="estado" role="status"></p>
             </form>
+            <p class="nota">Usa la misma cuenta del Portal del alumno (Módulo 4). Si ya iniciaste sesión en otro módulo, entrarás directo.</p>
         </div>
-    </div>
+    </main>
 
-    <script src="js/sigep.js"></script>
+    <script src="../js/vendor/supabase.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/sigep.js"></script>
+    <script>
+    (() => {
+      const { supabaseUrl, supabaseKey, storageKey = 'estadias-sesion' } = window.App.config;
+      const cliente = window.supabase.createClient(supabaseUrl, supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey } });
+      const $ = (id) => document.getElementById(id);
+      const estado = (texto, clase = '') => { $('estado').textContent = texto; $('estado').className = `estado ${clase}`; };
+
+      // Solo alumnos y asesores tienen expediente o documentos que revisar
+      async function tieneRol(id) {
+        const [asesor, alumno] = await Promise.all([
+          cliente.from('asesores').select('id').eq('id', id).maybeSingle(),
+          cliente.from('alumnos').select('id').eq('id', id).maybeSingle(),
+        ]);
+        return Boolean(asesor.data || alumno.data);
+      }
+
+      // Si ya hay sesión (de este o de otro módulo), entra directo
+      cliente.auth.getSession().then(async ({ data }) => {
+        if (new URLSearchParams(location.search).has('sin-rol')) {
+          estado('Esta cuenta no es de alumno ni de asesor.', 'bad');
+          return;
+        }
+        if (data.session && (!navigator.onLine || await tieneRol(data.session.user.id))) location.replace('modulo-1.html');
+      });
+
+      $('form-login').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const correo = $('correo').value.trim().toLowerCase();
+        const password = $('password').value;
+        if (!correo || !password) { estado('Escribe tu correo y tu contraseña.', 'bad'); return; }
+        if (!navigator.onLine) { estado('Necesitas conexión a internet para iniciar sesión.', 'bad'); return; }
+        $('btn-login').disabled = true;
+        estado('Validando…');
+        const { data, error } = await cliente.auth.signInWithPassword({ email: correo, password });
+        if (error) {
+          estado(/invalid login credentials/i.test(error.message) ? 'El correo o la contraseña no son correctos.' : 'No se pudo iniciar sesión. Inténtalo de nuevo.', 'bad');
+          $('btn-login').disabled = false;
+          return;
+        }
+        if (!(await tieneRol(data.user.id))) {
+          await cliente.auth.signOut({ scope: 'local' });
+          estado('Esta cuenta no es de alumno ni de asesor.', 'bad');
+          $('btn-login').disabled = false;
+          return;
+        }
+        estado('¡Bienvenido! Entrando…', 'ok');
+        location.replace('modulo-1.html');
+      });
+
+      if ('serviceWorker' in navigator && window.isSecureContext) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('serviceworker.js').catch(() => {}));
+      }
+    })();
+    </script>
 </body>
 </html>

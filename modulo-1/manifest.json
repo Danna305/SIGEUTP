@@ -1,24 +1,22 @@
 {
-  "name": "Idea Innovadora para App Estadías",
-  "short_name": "App Estadías",
-  "description": "Aplicación web para la idea innovadora de estadías.",
-  "start_url": "./index.html",
+  "id": "./modulo-1.html",
+  "name": "SIGEP UTP · Módulo 1: Expediente digital",
+  "short_name": "Expediente",
+  "description": "Expediente digital de estadías: el alumno sube sus documentos en PDF y el asesor los revisa.",
+  "lang": "es-MX",
+  "start_url": "./modulo-1.html",
   "scope": "./",
-  "prefer_related_applications": false,
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
-  "orientation": "portrait",
+  "background_color": "#F4F6FB",
+  "theme_color": "#13213F",
+  "orientation": "any",
+  "prefer_related_applications": false,
   "icons": [
-    {
-      "src": "img/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "img/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Mis documentos", "url": "./modulo-1.html#documentos", "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Historial", "url": "./modulo-1.html#historial", "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }] }
   ]
 }

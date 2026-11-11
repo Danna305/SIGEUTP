@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Portal del alumno · Módulo 4 · SIGEP UTP</title>
-<meta name="description" content="Portal del alumno del SIGEP UTP: consulta el dictamen, el checklist y las observaciones de tu tesina sincronizadas por tu asesor.">
+<title>Pre-auditoría de mi tesina · Módulo 3 · SIGEP UTP</title>
+<meta name="description" content="Pre-auditoría del SIGEP UTP: consulta el dictamen, el checklist y las observaciones de tu tesina sincronizadas por tu asesor.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="../css/sigep.css">
@@ -17,11 +17,11 @@
 <meta name="apple-mobile-web-app-title" content="SIGEP UTP">
 <link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png">
 </head>
-<body data-modulo="4" data-rol="alumno">
+<body data-modulo="3" data-rol="alumno">
 <div class="shell">
   <aside class="side">
-    <div class="side-head"><a class="logo" href="../index.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
-    <div class="module-pill"><span class="n">4</span><span><small>Módulo 4</small>Portal del alumno</span></div>
+    <div class="side-head"><a class="logo" href="../../index.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
+    <div class="module-pill"><span class="n">3</span><span><small>Módulo 3</small>Pre-auditoría de mi tesina</span></div>
     <div class="side-label">Menú</div>
     <nav class="side-nav">
       <a href="#" aria-current="page"><i data-ic="home"></i>Inicio</a>
@@ -29,10 +29,16 @@
       <a href="#observaciones"><i data-ic="message"></i>Observaciones</a>
       <a href="#citas"><i data-ic="calendar"></i>Mis citas</a>
       <a href="#notificaciones"><i data-ic="bell"></i>Avisos<span class="count alert" id="pa-nav-obs" hidden>0</span></a>
-      <a href="#"><i data-ic="userCheck"></i>Mi asesor</a>
-      <a href="#"><i data-ic="user"></i>Mi perfil</a>
+    </nav>
+    <div class="side-label">Otros módulos</div>
+    <nav class="side-nav" aria-label="Otros módulos de SIGEP">
+      <a href="../../modulo-1/modulo-1.html"><i data-ic="folder"></i>Mis documentos (Módulo 1)</a>
+      <a href="../../modulo-4/alumno.html#tesina"><i data-ic="upload"></i>Subir tesina (Módulo 4)</a>
+      <a href="../../modulo-4/alumno.html#asesor"><i data-ic="userCheck"></i>Mi asesor</a>
+      <a href="../../modulo-4/alumno.html#perfil"><i data-ic="user"></i>Mi perfil</a>
     </nav>
     <div class="side-foot">
+      <a href="../../index.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
       <button class="side-out"><i data-ic="logout"></i>Cerrar sesión</button>
     </div>
   </aside>
@@ -40,7 +46,7 @@
   <div class="main">
     <header class="topbar">
       <button class="burger" aria-label="Abrir menú"><i data-ic="menu"></i></button>
-      <div class="crumb">SIGEP UTP / Módulo 4 / <b>Inicio</b></div>
+      <div class="crumb">SIGEP UTP / Módulo 3 / <b>Pre-auditoría</b></div>
       <div class="top-actions">
         <div class="notif-wrap">
           <button class="icon-btn" id="btn-notificaciones" type="button" aria-label="Notificaciones" aria-expanded="false" aria-controls="panel-notificaciones"><i data-ic="bell"></i><span class="dot" id="notif-badge" hidden>0</span></button>
@@ -143,7 +149,9 @@
     </main>
   </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../js/vendor/supabase.js"></script>
+<script src="../../js/config.js"></script>
+<script src="../js/auth.js"></script>
 <script src="../js/sigep.js"></script>
 <script src="../js/sync.js"></script>
 <script src="../js/preauditoria.js"></script>

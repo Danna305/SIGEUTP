@@ -3,6 +3,8 @@
    - IndexedDB compartida entre la vista del Asesor y la del Alumno
    - Visor PDF offline, checklist de criterios y chatbot local
    - Notificaciones push/locales y Background Sync
+   - Datos reales del Supabase de SIGEP: alumnos asignados y versiones de
+     la tesina que el alumno sube en el Módulo 4 (tabla tesina_versiones)
    ===================================================================== */
 (() => {
   'use strict';
@@ -11,8 +13,10 @@
   const DB_VERSION = 4;
   const SYNC_TAG = 'sigep-sync-dictamenes';
   const ICONO = '../img/icono-sigep.svg';
-  const VAPID_PUBLIC_KEY = ''; // Pega aqu�� la clave pǧblica VAPID cuando exista backend de push.
   const API_OBSERVACIONES = '';
+  // Estados de tesina_versiones (Módulo 4) ⇄ estados de la pre-auditoría
+  const ESTADO_LOCAL = { 'En revisión': 'Pendiente', 'Aprobada': 'Aprobada', 'Requiere corrección': 'Requiere Correcciones' };
+  const ESTADO_TESINA = { 'Aprobada': 'Aprobada', 'Requiere Correcciones': 'Requiere corrección', 'No pasa': 'Requiere corrección' };
   const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
   const SOPORTA_GRABACION = 'MediaRecorder' in window && !!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia;
   const CANAL = 'BroadcastChannel' in window ? new BroadcastChannel('sigep-preauditoria') : null;
@@ -31,22 +35,13 @@
 
   function sesionActual() {
     try {
-      if (window.SIGEPAuth && typeof window.SIGEPAuth.sesionActual === 'function') {
-        const sesion = window.SIGEPAuth.sesionActual();
-        if (sesion) return sesion;
-      }
-      const rol = localStorage.getItem('sigep-rol');
-      if (!rol) return null;
-      return {
-        rol,
-        correo: localStorage.getItem('sigep-correo') || '',
-        nombre: localStorage.getItem('sigep-nombre') || '',
-        userId: localStorage.getItem('sigep-user-id') || ''
-      };
+      return window.SIGEPAuth && typeof window.SIGEPAuth.sesionActual === 'function' ? window.SIGEPAuth.sesionActual() : null;
     } catch (error) {
       return null;
     }
   }
+
+  const api = () => (window.SIGEPAuth && window.SIGEPAuth.cliente) || null;
 
   const estado = { rol: '', alumno: null, alumnos: [], versiones: [], version: null, nombreSesion: '' };
   const dictado = {
@@ -107,88 +102,18 @@
     }));
   }
 
-  const contenidoV1 = [
-    { pagina: 1, parrafo: 1, texto: 'TESINA SIGEP UTP. Alumna: Maria Jose Hernandez Guevara. Primera Version.' },
-    { pagina: 1, parrafo: 2, texto: '1. Planteamiento del problema. El sistema actual de gestion de estadias se realiza con hojas de calculo y documentos impresos.' },
-    { pagina: 1, parrafo: 3, texto: 'Esto provoca perdida de informacion y retrasos en la revision de los expedientes.' },
-    { pagina: 1, parrafo: 4, texto: 'La falta de un expediente digital limita el seguimiento oportuno de los alumnos.' },
-    { pagina: 2, parrafo: 1, texto: '2. Objetivos. Objetivo general: desarrollar un sistema web para la gestion de estadias.' },
-    { pagina: 2, parrafo: 2, texto: 'Objetivos especificos: registrar alumnos, asesores y documentos; automatizar la revision.' },
-    { pagina: 2, parrafo: 3, texto: '3. Justificacion. La digitalizacion reduce el uso de papel y mejora la trazabilidad de las entregas.' },
-    { pagina: 3, parrafo: 1, texto: '4. Metodologia. Se utilizara una metodologia incremental con entrevistas y prototipos.' },
-    { pagina: 3, parrafo: 2, texto: '5. Referencias. Pendiente de completar.' }
-  ];
+  // Checklist de una versión recién llegada: todo pendiente de revisar
+  function checklistInicial() {
+    return CRITERIOS.map((criterio) => ({ id: criterio.id, criterio: criterio.criterio, pagina: criterio.pagina, cumple: false, nota: criterio.sugerencia }));
+  }
 
-  const contenidoV2 = [
-    { pagina: 1, parrafo: 1, texto: 'TESINA SIGEP UTP. Alumna: Maria Jose Hernandez Guevara. Segunda Version.' },
-    { pagina: 1, parrafo: 2, texto: '1. Planteamiento del problema. La gestion de estadias en la UTP depende de hojas de calculo, correos y documentos impresos.' },
-    { pagina: 1, parrafo: 3, texto: 'La informacion se dispersa y los asesores no cuentan con un historial unico de cada entrega.' },
-    { pagina: 1, parrafo: 4, texto: 'Pregunta de investigacion: como mejorar el seguimiento y la pre-auditoria de las tesinas?' },
-    { pagina: 2, parrafo: 1, texto: '2. Objetivos. Objetivo general: desarrollar una PWA para la pre-auditoria de tesinas de estadia.' },
-    { pagina: 2, parrafo: 2, texto: 'Objetivos especificos: centralizar versiones, validar criterios y notificar el dictamen.' },
-    { pagina: 2, parrafo: 3, texto: '3. Justificacion. La solucion reduce tiempos de revision y da trazabilidad a las observaciones.' },
-    { pagina: 2, parrafo: 4, texto: '4. Marco teorico. Antecedentes: los expedientes digitales y las PWA mejoran el acceso y la disponibilidad.' },
-    { pagina: 3, parrafo: 1, texto: '5. Metodologia. Metodologia incremental con entrevistas, prototipos y pruebas con asesores.' },
-    { pagina: 3, parrafo: 2, texto: '6. Cronograma. Semana 1 a 3: analisis. Semana 4 a 8: desarrollo. Semana 9 a 12: pruebas y ajustes.' },
-    { pagina: 3, parrafo: 3, texto: '7. Referencias. Normas APA pendientes de completar.' }
-  ];
-
-  const contenidoV3 = [
-    { pagina: 1, parrafo: 1, texto: 'TESINA SIGEP UTP. Alumna: Maria Jose Hernandez Guevara. Tercera Version final para dictamen.' },
-    { pagina: 1, parrafo: 2, texto: '1. Planteamiento del problema. La gestion de estadias en la UTP se apoya en hojas de calculo, correos y documentos impresos.' },
-    { pagina: 1, parrafo: 3, texto: 'La dispersion de la informacion dificulta el seguimiento y la revision oportuna de las tesinas.' },
-    { pagina: 1, parrafo: 4, texto: 'Pregunta de investigacion: como mejorar la pre-auditoria de las tesinas mediante una PWA?' },
-    { pagina: 2, parrafo: 1, texto: '2. Objetivos. Objetivo general: desarrollar una PWA para la pre-auditoria de tesinas de estadia.' },
-    { pagina: 2, parrafo: 2, texto: 'Objetivos especificos: centralizar versiones, validar criterios, notificar dictamenes y operar offline.' },
-    { pagina: 2, parrafo: 3, texto: '3. Justificacion. La solucion reduce tiempos de revision, evita duplicidad de documentos y da trazabilidad.' },
-    { pagina: 2, parrafo: 4, texto: '4. Marco teorico. Antecedentes: las PWA combinan disponibilidad offline, notificaciones y bajo costo de mantenimiento.' },
-    { pagina: 3, parrafo: 1, texto: '5. Metodologia. Metodologia incremental con entrevistas, prototipos, pruebas de usabilidad y validacion con asesores.' },
-    { pagina: 3, parrafo: 2, texto: '6. Cronograma. Semana 1 a 3: analisis. Semana 4 a 8: desarrollo. Semana 9 a 12: pruebas y despliegue.' },
-    { pagina: 3, parrafo: 3, texto: '7. Referencias. Normas APA aplicadas a fuentes sobre PWA, IndexedDB y notificaciones push.' },
-    { pagina: 3, parrafo: 4, texto: '8. Conclusiones. La PWA mejora la pre-auditoria, el acceso a las versiones y la comunicacion entre asesor y alumno.' }
-  ];
-
-  const SEED_ALUMNOS = [
-    { id: 'mj', nombre: 'María José Hernández Guevara', iniciales: 'MJ', matricula: '2021098', carrera: 'Ingeniería en Desarrollo y Gestión de Software', empresa: 'Tesina SIGEP UTP', proyecto: 'Tesina SIGEP UTP', asesor: 'Dr. Miguel Ángel Flores', periodo: 'Enero – Junio 2026' },
-    { id: 'al', nombre: 'Ana López', iniciales: 'AL', matricula: '2021001', carrera: 'Software', empresa: 'Grupo Bimbo', proyecto: 'Estadía profesional', asesor: 'Dr. Miguel Ángel Flores', periodo: 'Enero – Junio 2026' },
-    { id: 'cm', nombre: 'Carlos Martínez', iniciales: 'CM', matricula: '2021002', carrera: 'Industrial', empresa: 'Volkswagen', proyecto: 'Estadía profesional', asesor: 'Dr. Miguel Ángel Flores', periodo: 'Enero – Junio 2026' },
-    { id: 'js', nombre: 'Jorge Sánchez', iniciales: 'JS', matricula: '2021005', carrera: 'Mecatrónica', empresa: 'Audi', proyecto: 'Estadía profesional', asesor: 'Dr. Miguel Ángel Flores', periodo: 'Enero – Junio 2026' }
-  ];
-
-  const SEED_VERSIONES = [
-    {
-      id: 'mj-v1', alumnoId: 'mj', numero: 1, titulo: 'Primera Versión', archivo: '../docs/tesina-sigep-v1.pdf',
-      estado: 'Requiere Correcciones', actualizado: Date.now() - 86400000 * 5,
-      observacionAsesor: 'Falta desarrollar el marco teórico, incluir el cronograma y completar las referencias APA. Revisa también la ortografía y las citas en el cuerpo del documento.',
-      checklist: crearChecklist({ portada: true, planteamiento: true, objetivos: true, justificacion: true, marco: false, metodologia: true, cronograma: false, referencias: false, conclusiones: false, formato: false }),
-      contenido: contenidoV1
-    },
-    {
-      id: 'mj-v2', alumnoId: 'mj', numero: 2, titulo: 'Segunda Versión', archivo: '../docs/tesina-sigep-v2.pdf',
-      estado: 'Pendiente', actualizado: Date.now() - 86400000 * 2,
-      observacionAsesor: 'Buen avance. Complete las referencias APA y agregue las conclusiones antes de la entrega final.',
-      checklist: crearChecklist({ portada: true, planteamiento: true, objetivos: true, justificacion: true, marco: true, metodologia: true, cronograma: true, referencias: false, conclusiones: false, formato: false }),
-      contenido: contenidoV2
-    },
-    {
-      id: 'mj-v3', alumnoId: 'mj', numero: 3, titulo: 'Tercera Versión', archivo: '../docs/tesina-sigep-v3.pdf',
-      estado: 'Pendiente', actualizado: Date.now() - 86400000,
-      observacionAsesor: 'Documento completo. El checklist está al 100%; listo para el dictamen final.',
-      checklist: crearChecklist({ portada: true, planteamiento: true, objetivos: true, justificacion: true, marco: true, metodologia: true, cronograma: true, referencias: true, conclusiones: true, formato: true }),
-      contenido: contenidoV3
-    }
-  ];
-
-  const SEED_NOTIFICACIONES = [
-    { id: 1, alumnoId: 'mj', versionId: 'mj-v1', titulo: 'Nueva observación disponible en V1', cuerpo: 'Revisa el marco teórico, el cronograma y las referencias APA de tu primera versión.', fecha: Date.now() - 86400000 * 4, leida: false },
-    { id: 2, alumnoId: 'mj', versionId: 'mj-v2', titulo: 'Tu versión 2 está pendiente de revisión', cuerpo: 'Tu asesor guardó observaciones sobre las referencias y conclusiones.', fecha: Date.now() - 86400000 * 2, leida: false }
-  ];
-
-  const SEED_CITAS = [
-    { id: 'cita-al-1', alumno_id: 'al', asesor_id: '', fecha: new Date(Date.now() + 86400000 * 2).toISOString(), motivo: 'Revisión de tesina', estado: 'Programada', created_at: new Date().toISOString() },
-    { id: 'cita-mj-1', alumno_id: 'mj', asesor_id: '', fecha: new Date(Date.now() + 86400000 * 3).toISOString(), motivo: 'Dictamen final', estado: 'Programada', created_at: new Date().toISOString() },
-    { id: 'cita-cm-1', alumno_id: 'cm', asesor_id: '', fecha: new Date(Date.now() - 86400000 * 2).toISOString(), motivo: 'Seguimiento de avance', estado: 'Completada', created_at: new Date(Date.now() - 86400000 * 5).toISOString() }
-  ];
+  // Datos de ejemplo de la versión anterior del módulo (se borran del dispositivo)
+  const DEMO_ANTERIOR = {
+    alumnos: ['mj', 'al', 'cm', 'js'],
+    versiones: ['mj-v1', 'mj-v2', 'mj-v3'],
+    notificaciones: [1, 2],
+    citas: ['cita-al-1', 'cita-mj-1', 'cita-cm-1']
+  };
 
   /* ---------- IndexedDB ---------- */
   function abrirDB() {
@@ -296,90 +221,135 @@
   }
 
   async function asegurarDatos(db) {
-    const totalAlumnos = await contarStore(db, 'alumnos').catch(() => 0);
-    const totalVersiones = await contarStore(db, 'versiones').catch(() => 0);
-    const totalCitas = await contarStore(db, 'citas').catch(() => 0);
-    if (totalAlumnos > 0 && totalVersiones > 0 && totalCitas > 0) return;
+    const hecho = await new Promise((resolve) => {
+      const solicitud = db.transaction('ajustes', 'readonly').objectStore('ajustes').get('demo-borrada');
+      solicitud.onsuccess = () => resolve(Boolean(solicitud.result));
+      solicitud.onerror = () => resolve(false);
+    });
+    if (hecho) return;
     await new Promise((resolve, reject) => {
-      const tx = db.transaction(['alumnos', 'versiones', 'notificaciones', 'citas'], 'readwrite');
-      SEED_ALUMNOS.forEach((alumno) => tx.objectStore('alumnos').put(alumno));
-      SEED_VERSIONES.forEach((version) => tx.objectStore('versiones').put(version));
-      SEED_NOTIFICACIONES.forEach((notificacion) => tx.objectStore('notificaciones').put(notificacion));
-      SEED_CITAS.forEach((cita) => tx.objectStore('citas').put(cita));
+      const tx = db.transaction([...Object.keys(DEMO_ANTERIOR), 'archivos', 'ajustes'], 'readwrite');
+      Object.entries(DEMO_ANTERIOR).forEach(([store, ids]) => ids.forEach((id) => tx.objectStore(store).delete(id)));
+      DEMO_ANTERIOR.versiones.forEach((id) => tx.objectStore('archivos').delete(id));
+      tx.objectStore('ajustes').put({ clave: 'demo-borrada', valor: true });
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
     });
   }
 
-  function alumnoDesdeFila(fila) {
+  // Si en este dispositivo entra otra cuenta, se borra lo que guardó la anterior
+  const STORES_USUARIO = ['alumnos', 'versiones', 'mensajes', 'borradores', 'notificaciones', 'dictamenes', 'evaluaciones_checklist', 'citas', 'pendientes', 'archivos', 'sync_queue', 'suscripciones'];
+  async function prepararUsuario(userId) {
+    const db = await abrirDB();
+    const previo = await obtener('ajustes', 'usuario').catch(() => null);
+    if (previo && previo.valor === userId) return;
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([...STORES_USUARIO, 'ajustes'], 'readwrite');
+      STORES_USUARIO.forEach((store) => tx.objectStore(store).clear());
+      tx.objectStore('ajustes').put({ clave: 'usuario', valor: userId });
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  // Cuatrimestre actual de la UTP: enero–abril, mayo–agosto, septiembre–diciembre
+  function periodoActual() {
+    const hoy = new Date();
+    const periodos = ['Enero – Abril', 'Mayo – Agosto', 'Septiembre – Diciembre'];
+    return `${periodos[Math.floor(hoy.getMonth() / 4)]} ${hoy.getFullYear()}`;
+  }
+
+  function alumnoDesdeFila(fila, asesor) {
     const nombre = fila.nombre || fila.correo || 'Alumno sin nombre';
     return {
-      id: String(fila.id || uid()),
+      id: String(fila.id),
       nombre,
       iniciales: iniciales(nombre),
-      matricula: fila.matricula || fila.matricula_nombres || '',
-      carrera: fila.carrera || 'Estadía profesional',
-      empresa: fila.empresa || 'Por definir',
-      proyecto: fila.proyecto || 'Tesina / Estadía',
-      asesor: fila.asesor || (sesionActual() && sesionActual().nombre) || 'Asesor asignado',
-      periodo: fila.periodo || 'Periodo actual',
+      matricula: fila.matricula || '',
+      carrera: fila.nivel === 'TSU' ? 'Técnico Superior Universitario' : 'Ingeniería',
+      empresa: 'Estadía profesional',
+      proyecto: 'Tesina de estadía',
+      asesor: asesor || 'Asesor asignado',
+      periodo: periodoActual(),
       correo: fila.correo || ''
     };
   }
 
-  async function guardarAlumnosLocales(alumnos) {
+  // Une la versión de la tesina (servidor) con lo que la pre-auditoría guardó
+  // en el dispositivo: checklist, observaciones y texto extraído del PDF.
+  function versionDesdeFila(fila, previa) {
+    const estadoServidor = ESTADO_LOCAL[fila.estado] || 'Pendiente';
+    const cambioEnServidor = !previa || previa.estadoServidor !== fila.estado;
+    const pendienteLocal = Boolean(previa && previa.estadoEnvio === 'pendiente_envio');
+    return {
+      ...(previa || {}),
+      id: fila.id,
+      alumnoId: fila.alumno_id,
+      numero: fila.numero,
+      titulo: etiquetaVersion(fila.numero),
+      archivo: fila.nombre_archivo,
+      archivo_path: fila.archivo_path,
+      tipo: fila.tipo,
+      tamano: fila.tamano_bytes,
+      comentarioAlumno: fila.comentario || '',
+      estadoServidor: fila.estado,
+      estado: pendienteLocal || !cambioEnServidor ? previa.estado : estadoServidor,
+      actualizado: previa ? (cambioEnServidor && !pendienteLocal ? Date.now() : previa.actualizado) : new Date(fila.subida_en).getTime(),
+      observacionAsesor: previa ? previa.observacionAsesor || '' : '',
+      checklist: previa && Array.isArray(previa.checklist) && previa.checklist.length ? previa.checklist : checklistInicial(),
+      contenido: previa && Array.isArray(previa.contenido) ? previa.contenido : []
+    };
+  }
+
+  // Trae de Supabase los alumnos que el usuario puede ver (RLS: el asesor, sus
+  // asignados; el alumno, solo a sí mismo) y sus versiones de la tesina.
+  async function sincronizarCatalogo() {
+    const cliente = api();
+    if (!navigator.onLine || !cliente) return false;
+    const [alumnosR, versionesR, asignacionesR] = await Promise.all([
+      cliente.from('alumnos').select('id, matricula, nombre, correo, nivel'),
+      cliente.from('tesina_versiones').select('id, alumno_id, numero, archivo_path, nombre_archivo, tipo, tamano_bytes, comentario, estado, subida_en').order('numero'),
+      cliente.from('asignaciones_asesor').select('alumno_id, asesores (nombre)')
+    ]);
+    if (alumnosR.error || versionesR.error) throw alumnosR.error || versionesR.error;
+
+    const asesorDe = new Map((asignacionesR.data || []).map((a) => [a.alumno_id, a.asesores && a.asesores.nombre]));
+    const sesion = sesionActual();
+    const alumnos = (alumnosR.data || []).map((fila) => alumnoDesdeFila(fila, asesorDe.get(fila.id) || (sesion && sesion.rol === 'asesor' ? sesion.nombre : '')));
+    const ids = new Set(alumnos.map((a) => a.id));
+    const filasVersion = (versionesR.data || []).filter((v) => ids.has(v.alumno_id));
+    const previas = new Map((await obtenerTodos('versiones')).map((v) => [v.id, v]));
+    const versiones = filasVersion.map((fila) => versionDesdeFila(fila, previas.get(fila.id)));
+    const vigentes = new Set(versiones.map((v) => v.id));
+    const alumnosPrevios = await obtenerTodos('alumnos');
+
     const db = await abrirDB();
     await new Promise((resolve, reject) => {
-      const tx = db.transaction('alumnos', 'readwrite');
-      alumnos.forEach((alumno) => tx.objectStore('alumnos').put(alumno));
+      const tx = db.transaction(['alumnos', 'versiones'], 'readwrite');
+      const storeAlumnos = tx.objectStore('alumnos');
+      const storeVersiones = tx.objectStore('versiones');
+      alumnosPrevios.forEach((alumno) => { if (!ids.has(alumno.id)) storeAlumnos.delete(alumno.id); });
+      previas.forEach((_, id) => { if (!vigentes.has(id)) storeVersiones.delete(id); });
+      alumnos.forEach((alumno) => storeAlumnos.put(alumno));
+      versiones.forEach((version) => storeVersiones.put(version));
       tx.oncomplete = resolve;
       tx.onerror = () => reject(tx.error);
     });
-  }
-
-  async function poblarAlumnosDesdeSupabase() {
-    if (!navigator.onLine) return [];
-    let api = window.supabaseClient || null;
-    if (!api && window.SIGEPSync && typeof window.SIGEPSync.crearCliente === 'function') {
-      api = await window.SIGEPSync.crearCliente();
-    }
-    if (!api) return [];
-
-    let filas = [];
-    const { data: alumnosRemotos, error: errorAlumnos } = await api.from('alumnos').select('*');
-    if (!errorAlumnos && Array.isArray(alumnosRemotos) && alumnosRemotos.length) {
-      filas = alumnosRemotos;
-    } else {
-      const { data: usuarios, error: errorUsuarios } = await api
-        .from('usuarios')
-        .select('id,nombre,correo,rol,matricula_nombres')
-        .eq('rol', 'alumno');
-      if (errorUsuarios) {
-        console.warn('[SIGEP] No se pudo consultar alumnos ni usuarios en Supabase:', errorUsuarios.message);
-        return [];
-      }
-      filas = usuarios || [];
-    }
-
-    const alumnos = filas.map(alumnoDesdeFila);
-    if (!alumnos.length) return [];
-    try {
-      await guardarAlumnosLocales(alumnos);
-    } catch (error) {
-      console.warn('[SIGEP] No se pudo guardar el respaldo de alumnos en IndexedDB:', error);
-    }
-    return alumnos;
+    return true;
   }
 
   async function esperarAlumnos() {
     try {
-      await abrirDB();
-      const alumnos = await obtenerTodos('alumnos');
-      if (alumnos.length) return alumnos;
+      await sincronizarCatalogo();
+    } catch (error) {
+      console.warn('[SIGEP] No se pudo actualizar la lista desde Supabase; se usa la copia del dispositivo:', error.message || error);
+    }
+    try {
+      return await obtenerTodos('alumnos');
     } catch (error) {
       console.warn('[SIGEP] IndexedDB no disponible para leer alumnos:', error);
+      return [];
     }
-    return poblarAlumnosDesdeSupabase().catch(() => []);
   }
 
   /* ---------- Utilidades de interfaz ---------- */
@@ -469,15 +439,22 @@
       return;
     }
 
+    // Suscripción push real: la clave pública la da la función enviar-push y la
+    // suscripción se guarda en Supabase (registrar_push), igual que en el Módulo 4
     let suscripcion = null;
-    if ('serviceWorker' in navigator && 'PushManager' in window && VAPID_PUBLIC_KEY) {
+    const cliente = api();
+    if ('serviceWorker' in navigator && 'PushManager' in window && cliente && navigator.onLine) {
       try {
+        const { data, error } = await cliente.functions.invoke('enviar-push', { body: { accion: 'clave' } });
+        if (error || !data || !data.clave) throw new Error('El servidor de notificaciones no está configurado.');
         const registro = await navigator.serviceWorker.ready;
-        suscripcion = await registro.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-        });
+        suscripcion = await registro.pushManager.getSubscription()
+          || await registro.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(data.clave) });
+        const { endpoint, keys } = suscripcion.toJSON();
+        const r = await cliente.rpc('registrar_push', { p_endpoint: endpoint, p_p256dh: keys.p256dh, p_auth: keys.auth });
+        if (r.error) throw r.error;
       } catch (error) {
+        suscripcion = null;
         console.warn('[SIGEP] No se pudo crear la suscripción push:', error);
       }
     }
@@ -490,7 +467,9 @@
     });
 
     await actualizarBotonPush();
-    toast('Notificaciones activadas. El alumno recibirá avisos de sus dictámenes.', 'ok');
+    toast(suscripcion
+      ? 'Notificaciones activadas. Te avisaremos aunque la app esté cerrada.'
+      : 'Notificaciones locales activadas. Las push se activan con conexión y el servidor configurado.', 'ok');
   }
 
   async function actualizarBotonPush() {
@@ -550,32 +529,89 @@
     }
   }
 
+  const esPdf = (version) => (version.tipo || 'application/pdf') === 'application/pdf' || /\.pdf$/i.test(version.archivo || '');
+
+  // Archivo de la versión: copia del dispositivo o bucket privado «tesinas»
+  async function obtenerArchivo(version) {
+    let registro = await obtener('archivos', version.id).catch(() => null);
+    if (registro && registro.blob) return registro;
+    const cliente = api();
+    if (!navigator.onLine || !cliente || !version.archivo_path) throw new Error('Archivo no guardado en el dispositivo.');
+    const { data, error } = await cliente.storage.from('tesinas').download(version.archivo_path);
+    if (error) throw error;
+    const blob = new Blob([data], { type: version.tipo || data.type || 'application/pdf' });
+    registro = { id: version.id, nombre: version.archivo, tipo: blob.type, blob };
+    await guardar('archivos', registro).catch(() => {});
+    return registro;
+  }
+
+  // Texto del PDF (para el chatbot): PDF.js compartido en js/vendor/pdfjs
+  let pdfjs = null;
+  async function extraerTexto(version, blob) {
+    if (Array.isArray(version.contenido) && version.contenido.length) return;
+    try {
+      if (!pdfjs) {
+        pdfjs = await import(new URL('../../js/vendor/pdfjs/pdf.min.mjs', document.baseURI).href);
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL('../../js/vendor/pdfjs/pdf.worker.min.mjs', document.baseURI).href;
+      }
+      const pdf = await pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise;
+      const contenido = [];
+      for (let n = 1; n <= pdf.numPages; n++) {
+        const pagina = await pdf.getPage(n);
+        const { items } = await pagina.getTextContent();
+        // Texto de la página en oraciones, agrupadas en fragmentos cortos para citarlas
+        const texto = items.map((item) => item.str + (item.hasEOL ? ' ' : '')).join('').replace(/\s+/g, ' ').trim();
+        const oraciones = texto.split(/(?<=[.?!])\s+(?=[A-ZÁÉÍÓÚÑ¿¡0-9])/u);
+        let parrafo = 0;
+        let actual = '';
+        oraciones.forEach((oracion) => {
+          if (actual && (actual.length + oracion.length) > 280) {
+            contenido.push({ pagina: n, parrafo: ++parrafo, texto: actual });
+            actual = '';
+          }
+          actual = actual ? `${actual} ${oracion}` : oracion;
+        });
+        if (actual) contenido.push({ pagina: n, parrafo: ++parrafo, texto: actual });
+        pagina.cleanup();
+      }
+      await pdf.destroy();
+      version.contenido = contenido;
+      const guardada = await obtener('versiones', version.id).catch(() => null);
+      if (guardada) await guardar('versiones', { ...guardada, contenido }).catch(() => {});
+    } catch (error) {
+      console.warn('[SIGEP] No se pudo leer el texto del PDF:', error);
+    }
+  }
+
+  function mensajeEnVisor(iframe, texto) {
+    iframe.removeAttribute('src');
+    iframe.srcdoc = `<p style="font-family:Inter,system-ui,sans-serif;padding:24px;color:#5B6782">${escapar(texto)}</p>`;
+  }
+
   async function cargarPdfEn(iframe, version, enlace) {
     if (!iframe) return;
     try {
-      let registro = await obtener('archivos', version.id);
-      if (!registro || !registro.blob) {
-        const respuesta = await fetch(version.archivo);
-        if (!respuesta.ok) throw new Error(`No se pudo cargar ${version.archivo}`);
-        const blob = await respuesta.blob();
-        registro = { id: version.id, nombre: version.archivo.split('/').pop(), tipo: blob.type || 'application/pdf', blob };
-        await guardar('archivos', registro);
-      }
+      const registro = await obtenerArchivo(version);
       const anterior = urlPdfActual;
       urlPdfActual = URL.createObjectURL(registro.blob);
-      iframe.removeAttribute('srcdoc');
-      iframe.src = urlPdfActual;
-      iframe.title = `${version.titulo} · ${version.archivo.split('/').pop()}`;
       if (enlace) {
         enlace.href = urlPdfActual;
-        enlace.removeAttribute('download');
+        if (esPdf(version)) enlace.removeAttribute('download');
+        else enlace.setAttribute('download', version.archivo || 'tesina');
+      }
+      if (esPdf(version)) {
+        iframe.removeAttribute('srcdoc');
+        iframe.src = urlPdfActual;
+        iframe.title = `${version.titulo} · ${version.archivo}`;
+        extraerTexto(version, registro.blob);
+      } else {
+        mensajeEnVisor(iframe, `Esta versión es un documento de Word (${version.archivo}). Usa «Abrir» para descargarlo; el visor solo muestra PDF.`);
       }
       if (anterior) setTimeout(() => URL.revokeObjectURL(anterior), 1000);
     } catch (error) {
-      iframe.removeAttribute('src');
-      iframe.srcdoc = '<p style="font-family:Inter,system-ui,sans-serif;padding:24px;color:#5B6782">No se pudo cargar el PDF sin conexión. Abre el documento cuando tengas red para guardarlo en el dispositivo.</p>';
-      if (enlace) enlace.href = version.archivo;
-      console.warn('[SIGEP] PDF no disponible:', error);
+      mensajeEnVisor(iframe, 'No se pudo cargar el documento sin conexión. Ábrelo cuando tengas red para guardarlo en el dispositivo.');
+      if (enlace) enlace.removeAttribute('href');
+      console.warn('[SIGEP] Documento no disponible:', error);
     }
   }
 
@@ -594,9 +630,14 @@
       const item = version.checklist.find((registro) => registro.id === criterio.id);
       if (!item) return;
 
-      const cita = version.contenido.find((fragmento) => criterio.keywords.some((palabra) => normalizar(fragmento.texto).includes(normalizar(palabra))))
-        || version.contenido.find((fragmento) => fragmento.pagina === criterio.pagina)
-        || version.contenido[0];
+      // Se busca primero la palabra principal del criterio y se omite el índice
+      // (en una tesina real, «desarrollo» también aparece en el nombre de la carrera)
+      const contenido = (Array.isArray(version.contenido) ? version.contenido : [])
+        .filter((fragmento) => !/^(indice|contenido)\b/.test(normalizar(fragmento.texto)));
+      const cita = criterio.keywords.reduce((hallada, palabra) => hallada
+          || contenido.find((fragmento) => normalizar(fragmento.texto).includes(normalizar(palabra))), null)
+        || contenido.find((fragmento) => fragmento.pagina === criterio.pagina)
+        || contenido[0];
 
       if (cita && !usados.has(`${cita.pagina}-${cita.parrafo}`)) {
         usados.add(`${cita.pagina}-${cita.parrafo}`);
@@ -1200,6 +1241,10 @@
 
   function enlazarAsesor() {
     enlazarCitas();
+    document.addEventListener('click', (event) => {
+      const boton = event.target.closest('[data-ir-alumno]');
+      if (boton) irAPreauditoria(boton.dataset.irAlumno, boton.dataset.irVersion);
+    });
     const select = $('#pa-alumno');
     if (select) select.addEventListener('change', () => cargarAlumno(select.value));
 
@@ -1276,8 +1321,9 @@
       estado.alumno = null;
       estado.versiones = [];
       limpiarWorkspace();
+      renderResumenAsesor().catch(() => {});
       const info = $('#pa-alumno-info');
-      if (info) info.innerHTML = '<span class="avatar">--</span><div class="grow"><b>Sin alumnos</b><small>No hay alumnos locales ni remotos disponibles.</small></div>';
+      if (info) info.innerHTML = '<span class="avatar">--</span><div class="grow"><b>Sin alumnos</b><small>Aún no tienes alumnos asignados (o no hay conexión para consultarlos).</small></div>';
       return;
     }
 
@@ -1289,11 +1335,79 @@
     });
 
     const parametro = new URLSearchParams(location.search).get('alumno');
-    const preferido = alumnos.some((alumno) => alumno.id === parametro) ? parametro : (alumnos.some((alumno) => alumno.id === 'mj') ? 'mj' : alumnos[0] && alumnos[0].id);
+    const preferido = alumnos.some((alumno) => alumno.id === parametro) ? parametro : alumnos[0] && alumnos[0].id;
     if (preferido) {
       select.value = preferido;
       await cargarAlumno(preferido);
     }
+  }
+
+  // Tarjetas y listas de «Alumnos asignados» con los datos reales
+  async function renderResumenAsesor() {
+    const listaAlumnos = $('#pa-lista-alumnos');
+    if (!listaAlumnos) return;
+    const versiones = await obtenerTodos('versiones').catch(() => []);
+    const citas = await obtenerTodos('citas').catch(() => []);
+    const porAlumno = new Map();
+    versiones.forEach((version) => {
+      if (!porAlumno.has(version.alumnoId)) porAlumno.set(version.alumnoId, []);
+      porAlumno.get(version.alumnoId).push(version);
+    });
+    const porRevisar = versiones.filter((version) => version.estado === 'Pendiente').sort((a, b) => (b.actualizado || 0) - (a.actualizado || 0));
+    const semana = Date.now() + 7 * 86400000;
+    const citasSemana = citas.filter((cita) => cita.estado === 'Programada' && new Date(cita.fecha).getTime() >= Date.now() - 3600000 && new Date(cita.fecha).getTime() <= semana);
+    const sinEntrega = estado.alumnos.filter((alumno) => !porAlumno.has(alumno.id));
+    const poner = (selector, valor) => { const el = $(selector); if (el) el.textContent = String(valor); };
+    poner('#pa-stat-alumnos', estado.alumnos.length);
+    poner('#pa-stat-revisar', porRevisar.length);
+    poner('#pa-stat-citas', citasSemana.length);
+    poner('#pa-stat-sin-entrega', sinEntrega.length);
+    poner('#pa-cuenta-entregas', porRevisar.length);
+    [['#pa-nav-alumnos', estado.alumnos.length], ['#pa-nav-revisar', porRevisar.length]].forEach(([selector, valor]) => {
+      const el = $(selector);
+      if (!el) return;
+      el.textContent = String(valor);
+      el.hidden = valor === 0;
+    });
+
+    if (!estado.alumnos.length) {
+      listaAlumnos.innerHTML = '<div class="pa-empty">Aún no tienes alumnos asignados.</div>';
+    } else {
+      listaAlumnos.innerHTML = estado.alumnos.map((alumno) => {
+        const suyas = (porAlumno.get(alumno.id) || []).sort((a, b) => b.numero - a.numero);
+        const ultima = suyas[0];
+        const avance = ultima && Array.isArray(ultima.checklist) && ultima.checklist.length
+          ? Math.round(ultima.checklist.filter((item) => item.cumple).length * 100 / ultima.checklist.length) : 0;
+        const chip = !ultima ? ['', 'Sin entregas']
+          : ultima.estado === 'Aprobada' ? ['ok', 'Aprobada']
+          : ultima.estado === 'Pendiente' ? ['warn', 'Por revisar'] : ['bad', 'En corrección'];
+        return `<div class="r"><span class="avatar">${escapar(alumno.iniciales || iniciales(alumno.nombre))}</span>
+          <div class="grow" style="min-width:0"><b>${escapar(alumno.nombre)}</b><small>${escapar(alumno.matricula)} · ${suyas.length} ${suyas.length === 1 ? 'versión' : 'versiones'}</small></div>
+          <div style="width:min(150px,34%);flex-shrink:0"><div style="display:flex;justify-content:space-between;gap:6px;font-size:.78rem" class="num"><span><span class="chip ${chip[0]}">${chip[1]}</span></span><b>${avance}%</b></div><div class="bar ${avance === 100 ? 'ok' : ''}" style="margin-top:6px"><i style="width:${avance}%"></i></div></div>
+          <button class="btn soft sm" type="button" data-ir-alumno="${escapar(alumno.id)}"${ultima ? ` data-ir-version="${escapar(ultima.id)}"` : ''}>Ver</button></div>`;
+      }).join('');
+    }
+
+    const listaEntregas = $('#pa-lista-entregas');
+    if (listaEntregas) {
+      const nombreDe = (id) => (estado.alumnos.find((alumno) => alumno.id === id) || {}).nombre || 'Alumno';
+      listaEntregas.innerHTML = porRevisar.length ? porRevisar.slice(0, 6).map((version) => `
+        <div class="r"><span class="ic-box" style="margin:0"><i data-ic="file"></i></span>
+          <div class="grow"><b>${escapar(version.titulo)} · V${version.numero}</b><small>${escapar(nombreDe(version.alumnoId))} · ${escapar(fecha(version.actualizado))}</small></div>
+          <button class="btn sm" type="button" data-ir-alumno="${escapar(version.alumnoId)}" data-ir-version="${escapar(version.id)}">Revisar</button></div>`).join('')
+        : '<div class="pa-empty">No hay entregas pendientes de revisión.</div>';
+    }
+    if (window.pintarIconos) window.pintarIconos(listaAlumnos.closest('section') || document);
+  }
+
+  // «Ver» / «Revisar» del resumen: abre la pre-auditoría de esa versión
+  async function irAPreauditoria(alumnoId, versionId) {
+    const enlace = $('.side-nav [data-seccion="preauditoria"]');
+    if (enlace) enlace.click();
+    const select = $('#pa-alumno');
+    if (select) select.value = alumnoId;
+    await cargarAlumno(alumnoId);
+    if (versionId) await cargarVersion(versionId);
   }
 
   async function cargarAlumno(alumnoId) {
@@ -1310,6 +1424,7 @@
     } else {
       limpiarWorkspace();
     }
+    renderResumenAsesor().catch(() => {});
   }
 
   function renderAlumnoInfo() {
@@ -1599,9 +1714,11 @@
     aplicarChip($('#pa-pdf-estado'), version.estado);
     aplicarChip($('#pa-dictamen-chip'), version.estado);
     renderVersionTabs();
+    renderResumenAsesor().catch(() => {});
     const actualizado = $('#pa-ultima-actualizacion');
     if (actualizado) actualizado.textContent = `Última actualización: ${fecha(version.actualizado)}`;
 
+    await registrarEnTesina(version, nuevoEstado, observacion);
     await notificarAlumno(version);
     await actualizarPanelNotificaciones();
     await programarSync(version);
@@ -1611,6 +1728,22 @@
       ? `Dictamen "${nuevoEstado}" guardado y notificado al alumno.`
       : `Dictamen "${nuevoEstado}" guardado. Activa notificaciones para avisar al alumno.`;
     toast(aviso, nuevoEstado === 'Aprobada' ? 'ok' : 'warn');
+  }
+
+  // El dictamen también queda en la tesina del Módulo 4 (estado y observación)
+  // y se avisa al alumno por push. Sin conexión se queda en la cola.
+  async function registrarEnTesina(version, nuevoEstado, observacion) {
+    if (!window.SIGEPSync || typeof window.SIGEPSync.llamar !== 'function') return;
+    const estadoTesina = ESTADO_TESINA[nuevoEstado];
+    if (!estadoTesina) return;
+    const texto = observacion || (nuevoEstado === 'Aprobada' ? 'Pre-auditoría aprobada: la versión cumple con los criterios revisados.' : `Dictamen de pre-auditoría: ${nuevoEstado}.`);
+    const resultado = await window.SIGEPSync.llamar('observar_version',
+      { p_version: version.id, p_texto: `[Pre-auditoría] ${texto}`, p_estado: estadoTesina },
+      { accion: 'avisar', version: version.id });
+    if (resultado && resultado.error) toast(`La tesina no se actualizó: ${resultado.error.message || 'sin permiso'}.`, 'bad');
+    version.estadoServidor = estadoTesina;
+    version.estadoEnvio = resultado && resultado.encolado ? 'pendiente_envio' : 'sincronizado';
+    await guardar('versiones', version).catch(() => {});
   }
 
   function idNotificacion() {
@@ -1721,7 +1854,7 @@
       cuerpo
     });
 
-    const destino = new URL('./modulo-4.html', location.href);
+    const destino = new URL('./alumno.html', location.href);
     destino.searchParams.set('alumno', estado.alumno.id);
     destino.searchParams.set('version', version.id);
     await mostrarNotificacionSW(titulo, cuerpo, destino.href);
@@ -1791,20 +1924,14 @@
 
   async function cargarAlumnoVista() {
     const sesion = sesionActual();
-    const alumnos = await obtenerTodos('alumnos');
-    const parametro = new URLSearchParams(location.search).get('alumno');
-    const nombreSesion = normalizar(sesion && sesion.nombre);
-    const porNombre = nombreSesion ? alumnos.find((alumno) => {
-      const nombreAlumno = normalizar(alumno.nombre);
-      return nombreAlumno === nombreSesion || nombreAlumno.includes(nombreSesion) || nombreSesion.includes(nombreAlumno);
-    }) : null;
-
+    const alumnos = await esperarAlumnos();
     estado.nombreSesion = (sesion && sesion.nombre) || '';
-    estado.alumno = (parametro && alumnos.find((alumno) => alumno.id === parametro))
-      || porNombre
-      || alumnos.find((alumno) => alumno.id === 'mj')
-      || alumnos[0];
-    if (!estado.alumno) return;
+    estado.alumno = alumnos.find((alumno) => sesion && alumno.id === sesion.userId) || null;
+    if (!estado.alumno) {
+      const cont = $('#pa-alumno-versiones');
+      if (cont) cont.innerHTML = '<div class="pa-empty">No encontramos tu expediente. Conéctate a internet para cargarlo.</div>';
+      return;
+    }
 
     estado.versiones = (await porIndice('versiones', 'alumnoId', estado.alumno.id)).sort((a, b) => a.numero - b.numero);
     renderAlumnoCabecera();
@@ -2416,9 +2543,14 @@
   }
 
   /* ---------- Arranque y eventos globales ---------- */
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     const rol = document.body.dataset.rol;
     if (!rol) return;
+    // Sesión de Supabase (compartida con los otros módulos) y rol correcto
+    const perfil = window.SIGEPAuth ? await window.SIGEPAuth.verificar(rol) : null;
+    if (!perfil) return;
+    if (window.SIGEPPintarSesion) window.SIGEPPintarSesion();
+    await prepararUsuario(perfil.userId).catch((error) => console.warn('[SIGEP] No se pudo preparar el almacenamiento local:', error));
     estado.rol = rol;
     prepararToast();
     actualizarConexion();

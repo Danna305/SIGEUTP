@@ -136,29 +136,20 @@
     <div class="splash-loader" aria-label="Cargando"></div>
   </div>
 
+  <script src="../js/vendor/supabase.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/sigep.js"></script>
   <script>
-    // Redirección inteligente al iniciar la PWA
+    // Redirección al iniciar la PWA: con sesión de SIGEP va a la vista de su
+    // rol; sin sesión, al inicio de sesión
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
-        try {
-          // Lee la sesión persistida (JSON) o las claves individuales de respaldo.
-          const guardada = JSON.parse(localStorage.getItem('sigep_sesion') || 'null');
-          const rol = (guardada && guardada.rol) || localStorage.getItem('sigep-rol');
-
-          // Si ya hay sesión activa, redirige al módulo correspondiente directamente
-          if (rol === 'asesor') {
-            location.replace('Frontend/modulo-3.html');
-          } else if (rol === 'alumno') {
-            location.replace('Frontend/modulo-4.html');
-          } else {
-            // Si no hay sesión, va al Login
-            location.replace('Frontend/login.html');
-          }
-        } catch (e) {
-          location.replace('Frontend/login.html');
-        }
-      }, 300); // Pequeño delay de 300ms para una transición suave tipo PWA nativa
+        const sesion = window.SIGEPAuth && window.SIGEPAuth.sesionActual();
+        if (sesion && sesion.rol === 'asesor') location.replace('Frontend/modulo-3.html');
+        else if (sesion && sesion.rol === 'alumno') location.replace('Frontend/alumno.html');
+        else location.replace('Frontend/login.html');
+      }, 300); // pequeña pausa para una transición suave tipo app nativa
     });
   </script>
 </body>

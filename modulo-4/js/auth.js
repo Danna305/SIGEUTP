@@ -17,7 +17,7 @@
      establecerContrasena(n)   pone la contraseña nueva al volver de ese enlace
      alRecuperar(fn)           avisa cuando se abre el portal desde ese enlace
      error(e)                  convierte un error de Supabase en un mensaje en español
-   Depende de js/vendor/supabase.js, js/config.js y js/cache-api.js.
+   Depende de ../js/vendor/supabase.js, ../js/config.js (compartido) y js/cache-api.js.
    ========================================================================== */
 window.App = window.App || {};
 

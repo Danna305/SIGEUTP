@@ -1,13 +1,13 @@
 /* =====================================================================
    SIGEP UTP · Motor de sincronización híbrido
    IndexedDB (offline)  ⇄  Supabase (nube)
+   Usa el mismo proyecto de Supabase y la misma sesión que el resto de
+   SIGEP (js/auth.js → window.SIGEPAuth.cliente). Las reglas RLS deciden
+   qué puede leer y escribir cada quien.
    ===================================================================== */
 (() => {
   'use strict';
 
-  const SUPABASE_URL = 'https://xztdkcfptdfhztlpxduq.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6dGRrY2ZwdGRmaHp0bHB4ZHVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxMTI4NjcsImV4cCI6MjEwOTY4ODg2N30.rNHptcDeWbKgF26hUXcz7KdjnigXmzHacMgWCZQ7QUM';
-  const PLACEHOLDERS = /TU-PROYECTO|TU_ANON_KEY/;
 
   const DB_NAME = 'sigep-preauditoria';
   const DB_VERSION = 4;
@@ -20,10 +20,6 @@
   let sincronizando = false;
   let intervalo = null;
 
-  window.SUPABASE_URL = SUPABASE_URL;
-  window.SUPABASE_KEY = SUPABASE_KEY;
-
-  const configurado = () => Boolean(SUPABASE_URL && SUPABASE_KEY) && !PLACEHOLDERS.test(`${SUPABASE_URL}${SUPABASE_KEY}`);
 
   function toast(mensaje, tipo = '') {
     let cont = document.getElementById('pa-toast');
@@ -232,33 +228,23 @@
     return pendientes;
   }
 
-  function cargarSDK() {
-    if (window.supabase && typeof window.supabase.createClient === 'function') return Promise.resolve(true);
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      script.async = true;
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.head.appendChild(script);
-    });
-  }
-
+  // El cliente lo crea js/auth.js con la sesión compartida de SIGEP
   async function crearCliente() {
     if (cliente) return cliente;
-    if (!configurado()) return null;
-    await cargarSDK();
-    if (window.supabase && typeof window.supabase.createClient === 'function') {
-      cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      window.supabaseClient = cliente; // EXPOSICIÓN GLOBAL CORREGIDA
-      return cliente;
-    }
-    return null;
+    cliente = (window.SIGEPAuth && window.SIGEPAuth.cliente) || null;
+    return cliente;
   }
 
   async function subirItem(item) {
     const api = await crearCliente();
     if (!api) throw new Error('Supabase no configurado');
+    if (item.rpc) {
+      // Llamada a una función de la BD (p. ej. observar_version del Módulo 4)
+      const { error } = await api.rpc(item.rpc, item.payload);
+      if (error) throw error;
+      if (item.aviso) await api.functions.invoke('enviar-push', { body: item.aviso }).catch(() => {});
+      return;
+    }
     const { error } = await api
       .from(item.tabla)
       .upsert(aRemoto(item.tabla, item.payload), { onConflict: item.onConflict || 'id' });
@@ -333,6 +319,27 @@
     return { sincronizado: false, encolado: true };
   }
 
+  // Llama una función RPC; sin conexión (o si falla la red) la deja en la cola
+  async function llamar(rpc, payload, aviso = null) {
+    const item = { tabla: `rpc:${rpc}`, rpc, payload, aviso, timestamp: Date.now(), status: 'pending', intentos: 0 };
+    if (navigator.onLine) {
+      try {
+        await subirItem(item);
+        await actualizarBanner();
+        return { sincronizado: true, encolado: false };
+      } catch (error) {
+        // Un error de permisos o de datos no se arregla reintentando
+        if (error && error.code && !/^(08|57|PGRST0)/.test(String(error.code))) {
+          console.warn(`[SIGEP Sync] ${rpc} rechazada:`, error.message || error);
+          return { sincronizado: false, encolado: false, error };
+        }
+      }
+    }
+    await encolar(item);
+    await actualizarBanner();
+    return { sincronizado: false, encolado: true };
+  }
+
   async function flush() {
     if (sincronizando) return 0;
     const todos = await leerTodos();
@@ -373,5 +380,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar, { once: true });
   else iniciar();
 
-  window.SIGEPSync = { guardar, flush, actualizarBanner, contarPendientes, crearCliente, listo, sincronizar, leerLocal, traerTabla };
+  window.SIGEPSync = { guardar, llamar, flush, actualizarBanner, contarPendientes, crearCliente, listo, sincronizar, leerLocal, traerTabla };
 })();

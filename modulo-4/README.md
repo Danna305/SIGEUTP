@@ -20,7 +20,7 @@ instalación ni modo sin conexión.
 ## Estructura
 
 ```
-plataforma-estadias/
+modulo-4/   (dentro del repositorio SIGEUTP)
 ├── index.html              Página informativa (solo estructura y contenido)
 ├── portal.html             Acceso al portal: inicio de sesión y registro de alumnos
 ├── alumno.html             Panel del alumno: inicio, tesina, asesor y perfil
@@ -41,7 +41,6 @@ plataforma-estadias/
 │   ├── toast.js            Avisos emergentes accesibles
 │   ├── navigation.js       Menú de la página informativa
 │   ├── pwa.js              Registro del service worker, botón «Instalar app», conexión
-│   ├── config.js           Datos de conexión con Supabase (URL y clave publicable)
 │   ├── cache-api.js        Caché de las respuestas de la API (Cache Storage)
 │   ├── cola.js             Entregas sin conexión (IndexedDB); la usan la página y sw.js
 │   ├── push.js             Notificaciones push: activar, desactivar y avisar
@@ -55,15 +54,7 @@ plataforma-estadias/
 │   ├── voz.js              Notas de voz del asesor (grabar y escuchar)
 │   ├── portal.js           Pestañas y validación de inicio de sesión y registro
 │   ├── alumno.js           Panel del alumno
-│   ├── asesor.js           Panel del asesor
-│   └── vendor/
-│       ├── supabase.js     Librería oficial de Supabase (v2, licencia MIT)
-│       └── pdfjs/          PDF.js de Mozilla (4.10.38, licencia Apache 2.0)
-├── supabase/
-│   ├── esquema.sql         Tabla alumnos, seguridad (RLS) y registro automático
-│   ├── tesina.sql          Asesores, versiones, observaciones, notas, archivos, tiempo real y push
-│   ├── generar-claves-push.mjs  Claves VAPID para las notificaciones push
-│   └── functions/enviar-push/   Función del servidor que envía los push (Supabase Edge Function)
+│   └── asesor.js           Panel del asesor
 ├── icons/                  Íconos de la app (SVG, 192, 512, enmascarables, iOS)
 └── media/                  Imagen principal, video del recorrido y capturas de la app
 ```
@@ -88,19 +79,19 @@ Funciona tanto en `localhost` como en la página publicada.
 | Nombre, matrícula, nivel y fecha de registro | Tabla `public.alumnos` |
 
 Cada alumno solo puede leer su propio registro: lo garantizan las políticas RLS de
-`supabase/esquema.sql`. Al registrarse, un disparador de la base de datos crea su
+`../supabase/esquema.sql`. Al registrarse, un disparador de la base de datos crea su
 renglón en `alumnos` con los datos del formulario.
 
 ### Configuración (una sola vez)
 
 1. Crea una cuenta en [supabase.com](https://supabase.com) y un proyecto nuevo.
-2. En **SQL Editor**, pega el contenido de `supabase/esquema.sql` y pulsa **Run**.
+2. En **SQL Editor**, pega el contenido de `../supabase/esquema.sql` y pulsa **Run**.
 3. En **Authentication → Sign In / Providers → Email**, desactiva **Confirm email**
    para que el alumno entre en cuanto se registra (recomendado para la demostración).
    Si la dejas activa, el alumno debe confirmar desde su correo antes de iniciar sesión.
 4. En **Authentication → URL Configuration**, pon como *Site URL*
    `https://alexia-sv.github.io/plataforma-estadias/portal.html`.
-5. Copia en `js/config.js` la **Project URL** y la **Publishable key** (o *anon key*).
+5. Copia en `../js/config.js` (compartido por todos los módulos) la **Project URL** y la **Publishable key** (o *anon key*).
    Nunca uses ahí la *secret key* ni la *service_role key*.
 
 Las contraseñas deben tener al menos 8 caracteres, con letras y números; la matrícula,
@@ -116,7 +107,7 @@ Las contraseñas deben tener al menos 8 caracteres, con letras y números; la ma
   revisión y todas las versiones de cada alumno. Descarga los archivos, escribe
   observaciones y puede marcar la versión como **Aprobada** o **Requiere corrección**.
 
-Lo que garantiza la base de datos (`supabase/tesina.sql`):
+Lo que garantiza la base de datos (`../supabase/tesina.sql`):
 
 - El número de versión, el tipo y el tamaño los fija la base de datos, no el navegador.
 - Las versiones no se pueden modificar ni borrar; solo el asesor cambia su estado.
@@ -145,23 +136,23 @@ descargar.
 
 En **SQL Editor**, ejecuta en este orden (los dos se pueden volver a ejecutar):
 
-1. `supabase/esquema.sql`
-2. `supabase/tesina.sql`
+1. `../supabase/esquema.sql`
+2. `../supabase/tesina.sql`
 
-Si la base ya existía, **vuelve a ejecutar `supabase/tesina.sql` completo** para agregar
+Si la base ya existía, **vuelve a ejecutar `../supabase/tesina.sql` completo** para agregar
 las notas ancladas, las notas de voz (bucket `voz`), la pre-revisión, el tiempo real y la
 tabla de las notificaciones push. Mientras no se ejecute, el portal sigue funcionando, pero
 sin esas herramientas.
 
 ### Notificaciones push (una sola vez)
 
-1. En una terminal, desde la carpeta del proyecto: `node supabase/generar-claves-push.mjs`.
+1. En una terminal, desde la carpeta del proyecto: `node ../supabase/generar-claves-push.mjs`.
    Muestra una clave pública y una privada nuevas (la privada es secreta: no la compartas
    ni la guardes en el proyecto).
 2. En Supabase, **Edge Functions → Secrets → Add new secret**, agrega `VAPID_PUBLIC_KEY`,
    `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (con el valor `mailto:` seguido de tu correo).
 3. En **Edge Functions → Deploy a new function → Via Editor**, ponle de nombre
-   `enviar-push`, pega el contenido de `supabase/functions/enviar-push/index.ts` y pulsa
+   `enviar-push`, pega el contenido de `../supabase/functions/enviar-push/index.ts` y pulsa
    **Deploy function**.
 
 La app pide la clave pública a la función, así que no hay que cambiar ningún archivo. En
@@ -184,28 +175,9 @@ panel. Estas dos funciones solo se pueden ejecutar desde el SQL Editor.
 
 ## Datos de prueba
 
-Para que el portal tenga contenido de demostración: **10 cuentas** (8 alumnos y 2 asesores),
-**12 versiones** de tesina en PDF y **10 observaciones**, en todos los estados.
-Las tesinas son PDF reales de 3 o 4 páginas (portada, índice, capítulos, tablas y
-referencias) guardados en `supabase/datos-prueba/`, con datos ficticios.
-
-1. En **SQL Editor**, ejecuta `supabase/datos-prueba.sql` (crea las cuentas y las asigna).
-2. En una terminal, desde la carpeta del proyecto: `node supabase/sembrar-datos-prueba.mjs`
-   (sube las versiones y las observaciones; no necesita instalar nada).
-3. En **SQL Editor**, ejecuta `supabase/fechas-datos-prueba.sql`: reparte las entregas y
-   observaciones entre el 14 de septiembre y el 19 de octubre de 2026, las mismas fechas
-   que trae la portada de cada PDF.
-
-| Cuenta | Rol | Situación |
-| --- | --- | --- |
-| `prueba.asesor1@sigep-pruebas.mx` | Asesora (Dra. Mariana Torres) | Alumnos 01 a 04 |
-| `prueba.asesor2@sigep-pruebas.mx` | Asesor (Mtro. Ricardo Vega) | Alumnos 05 a 07 |
-| `prueba.alumno01@…` a `prueba.alumno07@…` | Alumnos | Versiones aprobadas, en revisión y con correcciones (el 04, sin entregas) |
-| `prueba.alumno08@sigep-pruebas.mx` | Alumno | Sin asesor y sin entregas |
-
-Todas usan la contraseña **Prueba2026**. Se pueden volver a ejecutar sin duplicar nada.
-Para quitarlas, ejecuta `supabase/borrar-datos-prueba.sql` y borra en **Storage → tesinas**
-y **Storage → voz** las carpetas que lista.
+Los datos de prueba son de todo SIGEP (módulos 1, 3 y 4): **12 cuentas** (10 alumnos y
+2 asesores) con tesinas, observaciones, expedientes, checklist de pre-auditoría y citas.
+Las instrucciones y la tabla de cuentas están en el `README.md` de la raíz del repositorio.
 
 ## Contraseñas
 

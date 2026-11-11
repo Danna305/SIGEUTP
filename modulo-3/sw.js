@@ -6,12 +6,12 @@
    ===================================================================== */
 'use strict';
 
-const CACHE = 'sigep-preauditoria-v10';
+const CACHE = 'sigep-preauditoria-v11';
 const DB_NAME = 'sigep-preauditoria';
 const DB_VERSION = 4;
 const SYNC_TAG = 'sigep-sync-dictamenes';
 const ICONO = './img/icon-192.png';
-const ALUMNO_URL = new URL('./Frontend/modulo-4.html', self.location.href).href;
+const ALUMNO_URL = new URL('./Frontend/alumno.html', self.location.href).href;
 
 const PRECACHE = [
   './',
@@ -19,10 +19,11 @@ const PRECACHE = [
   './offline.html',
   './Frontend/login.html',
   './Frontend/modulo-3.html',
-  './Frontend/modulo-4.html',
+  './Frontend/alumno.html',
   './css/sigep.css',
   './css/preauditoria.css',
   './js/sigep.js',
+  './js/auth.js',
   './js/sync.js',
   './js/preauditoria.js',
   './manifest.webmanifest',
@@ -31,9 +32,11 @@ const PRECACHE = [
   './img/icon-512.png',
   './img/icon-maskable-512.png',
   './img/apple-touch-icon.png',
-  './docs/tesina-sigep-v1.pdf',
-  './docs/tesina-sigep-v2.pdf',
-  './docs/tesina-sigep-v3.pdf'
+  // Archivos compartidos de SIGEP (raíz del repositorio)
+  '../js/config.js',
+  '../js/vendor/supabase.js',
+  '../js/vendor/pdfjs/pdf.min.mjs',
+  '../js/vendor/pdfjs/pdf.worker.min.mjs'
 ];
 
 self.addEventListener('install', (event) => {
@@ -47,7 +50,10 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(keys
+        // Solo sus versiones viejas: los otros módulos de SIGEP comparten el dominio
+        .filter((key) => key.startsWith('sigep-preauditoria-') && key !== CACHE)
+        .map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
@@ -84,6 +90,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // La configuración compartida va por red primero (cambia al configurar Supabase)
+  if (url.pathname.endsWith('/js/config.js')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copia = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copia)).catch(() => {});
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
   // Recursos estáticos (CSS, JS, imágenes, PDF): Cache First.
   event.respondWith(
     caches.match(request).then((cacheada) => {
@@ -110,7 +130,12 @@ self.addEventListener('push', (event) => {
 
   if (event.data) {
     try {
-      payload = Object.assign(payload, event.data.json());
+      const datos = event.data.json();
+      payload = Object.assign(payload, datos);
+      // Avisos de la función enviar-push: { titulo, texto, url, modulo, etiqueta }
+      if (datos.texto && !datos.cuerpo) payload.cuerpo = datos.texto;
+      if (datos.etiqueta) payload.tag = datos.etiqueta;
+      if (datos.modulo && datos.url) payload.url = new URL(datos.url, new URL(`../modulo-${Number(datos.modulo)}/`, self.registration.scope)).href;
     } catch (error) {
       payload.cuerpo = event.data.text();
     }

@@ -60,7 +60,60 @@ update auth.users u
         select id, creado_en from public.asesores where correo like '%@sigep-pruebas.mx') x
  where u.id = x.id;
 
--- 3. Resultado: cada versión con su fecha
+-- 3. Expedientes del Módulo 1: historial, fecha de cada documento y revisiones
+--    (cada paso del historial de un documento ocurre dos días después del anterior)
+update public.expedientes e
+   set creado_en = a.creado_en + interval '1 day'
+  from public.alumnos a
+ where a.id = e.alumno_id and a.correo like '%@sigep-pruebas.mx';
+
+with pasos as (
+  select h.id,
+         timestamptz '2026-09-10 10:00-06'
+           + (d.tipo_documento_id * interval '3 days')
+           + (right(a.matricula, 1)::int * interval '5 hours')
+           + ((row_number() over (partition by h.documento_id order by h.id) - 1) * interval '2 days') as fecha
+    from public.historial_documentos h
+    join public.documentos d on d.id = h.documento_id
+    join public.expedientes e on e.id = d.expediente_id
+    join public.alumnos a on a.id = e.alumno_id
+   where a.correo like '%@sigep-pruebas.mx'
+)
+update public.historial_documentos h
+   set fecha = p.fecha
+  from pasos p
+ where h.id = p.id;
+
+update public.documentos d
+   set fecha_subida = s.fecha
+  from (select documento_id, max(fecha) as fecha
+          from public.historial_documentos
+         where accion not like 'Revisión%'
+         group by documento_id) s,
+       public.expedientes e, public.alumnos a
+ where s.documento_id = d.id and e.id = d.expediente_id and a.id = e.alumno_id
+   and a.correo like '%@sigep-pruebas.mx';
+
+with revisiones as (
+  select r.id, r.documento_id,
+         row_number() over (partition by r.documento_id order by r.fecha_revision, r.id) as n
+    from public.revisiones_documento r
+), pasos as (
+  select documento_id, fecha,
+         row_number() over (partition by documento_id order by id) as n
+    from public.historial_documentos
+   where accion like 'Revisión%'
+)
+update public.revisiones_documento r
+   set fecha_revision = p.fecha
+  from revisiones x
+  join pasos p on p.documento_id = x.documento_id and p.n = x.n
+  join public.documentos d on d.id = x.documento_id
+  join public.expedientes e on e.id = d.expediente_id
+  join public.alumnos a on a.id = e.alumno_id
+ where r.id = x.id and a.correo like '%@sigep-pruebas.mx';
+
+-- 4. Resultado: cada versión con su fecha
 select a.nombre                                        as alumno,
        'v' || v.numero                                 as version,
        v.estado,

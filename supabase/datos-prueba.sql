@@ -1,10 +1,11 @@
 -- ==========================================================================
--- datos-prueba.sql — 10 cuentas de prueba (8 alumnos y 2 asesores)
+-- datos-prueba.sql — 12 cuentas de prueba (10 alumnos y 2 asesores)
 -- --------------------------------------------------------------------------
 -- PASO 1 de 3. En Supabase → SQL Editor, pega todo este archivo y pulsa Run.
--- PASO 2 de 3. En una terminal, dentro de la carpeta del proyecto:
+-- PASO 2 de 3. En una terminal, dentro de la carpeta del repositorio:
 --                node supabase/sembrar-datos-prueba.mjs
---              (sube las tesinas en PDF y las observaciones del asesor)
+--              (llena los módulos: tesinas y observaciones del Módulo 4,
+--               expedientes del Módulo 1 y pre-auditoría del Módulo 3)
 -- PASO 3 de 3. En el SQL Editor, ejecuta supabase/fechas-datos-prueba.sql
 --              (reparte las fechas entre septiembre y octubre de 2026)
 --
@@ -12,7 +13,8 @@
 --   Prueba2026. Las matrículas empiezan con 99 para no chocar con reales.
 -- · Se puede ejecutar más de una vez: no duplica cuentas.
 -- · Para quitarlas: supabase/borrar-datos-prueba.sql
--- Requisito: haber ejecutado antes esquema.sql y tesina.sql.
+-- Requisito: haber ejecutado antes esquema.sql, tesina.sql, modulo-1.sql y
+-- modulo-3.sql.
 -- ==========================================================================
 
 do $$
@@ -33,7 +35,9 @@ begin
       ('prueba.alumno05@sigep-pruebas.mx', 'Elena Castillo Pérez',         '9900000005', 'Ingeniería'),
       ('prueba.alumno06@sigep-pruebas.mx', 'Fernando Ruiz Domínguez',      '9900000006', 'Ingeniería'),
       ('prueba.alumno07@sigep-pruebas.mx', 'Gabriela Morales Núñez',       '9900000007', 'TSU'),
-      ('prueba.alumno08@sigep-pruebas.mx', 'Héctor Jiménez Rosas',         '9900000008', 'TSU')
+      ('prueba.alumno08@sigep-pruebas.mx', 'Héctor Jiménez Rosas',         '9900000008', 'TSU'),
+      ('prueba.alumno09@sigep-pruebas.mx', 'Irene Navarro Luna',           '9900000009', 'Ingeniería'),
+      ('prueba.alumno10@sigep-pruebas.mx', 'Jorge Sánchez Medina',         '9900000010', 'TSU')
     ) as t(correo, nombre, matricula, nivel)
   loop
     select u.id into v_id from auth.users u where lower(u.email) = r.correo;
@@ -71,7 +75,8 @@ begin
     end if;
   end loop;
 
-  -- Asignaciones: 4 alumnos por asesor; el alumno 08 se queda sin asesor
+  -- Asignaciones: 5 alumnos para el asesor 1 y 4 para el asesor 2;
+  -- el alumno 08 se queda sin asesor
   perform public.asignar_asesor('9900000001', 'prueba.asesor1@sigep-pruebas.mx');
   perform public.asignar_asesor('9900000002', 'prueba.asesor1@sigep-pruebas.mx');
   perform public.asignar_asesor('9900000003', 'prueba.asesor1@sigep-pruebas.mx');
@@ -79,6 +84,8 @@ begin
   perform public.asignar_asesor('9900000005', 'prueba.asesor2@sigep-pruebas.mx');
   perform public.asignar_asesor('9900000006', 'prueba.asesor2@sigep-pruebas.mx');
   perform public.asignar_asesor('9900000007', 'prueba.asesor2@sigep-pruebas.mx');
+  perform public.asignar_asesor('9900000009', 'prueba.asesor2@sigep-pruebas.mx');
+  perform public.asignar_asesor('9900000010', 'prueba.asesor1@sigep-pruebas.mx');
 end
 $$;
 

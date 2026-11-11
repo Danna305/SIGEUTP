@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Iniciar sesión · SIGEP UTP</title>
+<title>Iniciar sesión · Módulo 3 · SIGEP UTP</title>
 <meta name="description" content="Acceso a la PWA de pre-auditoría de tesinas y seguimiento académico del SIGEP UTP.">
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="../img/icon-192.png">
@@ -83,9 +83,10 @@
   </form>
 </dialog>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../js/vendor/supabase.js"></script>
+<script src="../../js/config.js"></script>
+<script src="../js/auth.js"></script>
 <script src="../js/sigep.js"></script>
-<script src="../js/sync.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('login-form');
@@ -100,32 +101,26 @@
     const recuperarStatus = document.getElementById('recuperar-status');
     const recuperarEnviar = document.getElementById('recuperar-enviar');
     const recuperarCerrar = document.getElementById('recuperar-cerrar');
+    const auth = window.SIGEPAuth;
+    const boton = form.querySelector('.login-submit');
 
-    const destino = (rol) => rol === 'alumno' ? 'modulo-4.html' : 'modulo-3.html';
-
-    // Persiste la sesión en localStorage (claves individuales + objeto sigep_sesion)
-    // para que la PWA recuerde el rol y no vuelva a pedir credenciales al reabrir.
-    const guardarSesion = (usuario) => {
-      const sesion = {
-        id: usuario.id || usuario.userId || '',
-        userId: usuario.id || usuario.userId || '',
-        nombre: usuario.nombre || '',
-        correo: usuario.correo || '',
-        rol: usuario.rol || '',
-        fecha: Date.now()
-      };
-      try {
-        localStorage.setItem('sigep-user-id', sesion.userId);
-        localStorage.setItem('sigep-nombre', sesion.nombre);
-        localStorage.setItem('sigep-correo', sesion.correo);
-        localStorage.setItem('sigep-rol', sesion.rol);
-        localStorage.setItem('sigep-login', String(sesion.fecha));
-        localStorage.setItem('sigep_sesion', JSON.stringify(sesion));
-      } catch (error) {
-        console.warn('[SIGEP] No se pudo persistir la sesión:', error);
-      }
-      return sesion;
+    const destino = (rol) => rol === 'alumno' ? 'alumno.html' : 'modulo-3.html';
+    const aviso = (texto, color) => {
+      if (!status) return;
+      status.style.color = color || 'var(--c-brand-500, #0056b3)';
+      status.textContent = texto;
     };
+
+    if (new URLSearchParams(location.search).get('motivo') === 'sin-rol') {
+      aviso('Esta cuenta no es de alumno ni de asesor.', '#dc3545');
+    } else if (auth && auth.cliente) {
+      // Si ya hay sesión (de este o de otro módulo de SIGEP), entra directo
+      auth.cliente.auth.getSession().then(async ({ data }) => {
+        if (!data.session) return;
+        const perfil = await auth.verificar().catch(() => null);
+        if (perfil) location.replace(destino(perfil.rol));
+      });
+    }
 
     // Toggle de visibilidad para contraseña
     toggle.addEventListener('click', () => {
@@ -137,113 +132,39 @@
       password.focus();
     });
 
-    // Iniciar Sesión conectando a Supabase
-form.addEventListener('submit', async (event) => {
+    // Inicio de sesión con Supabase Auth (las mismas cuentas de los módulos 1 y 4)
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const mailVal = correo.value.trim();
+      const mailVal = correo.value.trim().toLowerCase();
       const pwdVal = password.value;
-
       if (!mailVal || !pwdVal) return;
 
-      if (status) {
-        status.style.color = 'var(--c-brand-500, #0056b3)';
-        status.textContent = 'Validando credenciales...';
-      }
-
-      // 1. Manejo Offline
       if (!navigator.onLine) {
-        const lastMail = localStorage.getItem('sigep-correo');
-        const lastRol = localStorage.getItem('sigep-rol');
-        if (lastMail && lastMail === mailVal && lastRol) {
-          guardarSesion({
-            id: localStorage.getItem('sigep-user-id') || '',
-            nombre: localStorage.getItem('sigep-nombre') || '',
-            correo: lastMail,
-            rol: lastRol
-          });
-          if (status) status.textContent = 'Modo offline: accediendo con sesión guardada...';
-          setTimeout(() => { window.location.href = destino(lastRol); }, 800);
-          return;
-        } else {
-          if (status) {
-            status.style.color = '#dc3545';
-            status.textContent = 'Sin conexión. Solo puedes ingresar con una cuenta iniciada previamente.';
-          }
-          return;
-        }
+        aviso('Necesitas conexión para iniciar sesión. Si ya habías entrado, la app abre sola con tu sesión guardada.', '#dc3545');
+        return;
+      }
+      if (!auth || !auth.cliente) {
+        aviso('Falta la configuración de Supabase (js/config.js).', '#dc3545');
+        return;
       }
 
+      boton.disabled = true;
+      aviso('Validando credenciales...');
       try {
-        // 2. Garantizar obtención del cliente Supabase
-        let client = window.supabaseClient;
-        if (!client && window.SIGEPSync && typeof window.SIGEPSync.crearCliente === 'function') {
-          client = await window.SIGEPSync.crearCliente();
-        }
-
-        if (!client) {
-          throw new Error('No se pudo establecer conexión con el cliente de Supabase.');
-        }
-
-        const emailNormalizado = mailVal.toLowerCase();
-        const funcionFaltante = (error) => {
-          const texto = `${error && error.code ? error.code : ''} ${error && error.message ? error.message : ''} ${error && error.details ? error.details : ''}`.toLowerCase();
-          return /pgrst202|verificar_login|does not exist|schema cache/.test(texto);
-        };
-
-        // 3a. Validación segura de credenciales mediante RPC (bcrypt en PostgreSQL)
-        let user = null;
-        const { data: verificacion, error: errorRpc } = await client.rpc('verificar_login', {
-          p_correo: emailNormalizado,
-          p_password: pwdVal
-        });
-
-        if (errorRpc) {
-          if (!funcionFaltante(errorRpc)) {
-            console.error('Error detallado de Supabase:', errorRpc);
-            throw errorRpc;
-          }
-          // 3b. Compatibilidad: validación por correo si el RPC aún no está desplegado
-          console.warn('[SIGEP Auth] La función verificar_login no existe. Aplica BD/supabase.sql para validar contraseñas.');
-          const { data: legado, error: errorLegado } = await client
-            .from('usuarios')
-            .select('id, nombre, correo, rol')
-            .eq('correo', emailNormalizado)
-            .maybeSingle();
-          if (errorLegado) {
-            console.error('Error detallado de Supabase:', errorLegado);
-            throw errorLegado;
-          }
-          user = legado;
-        } else {
-          user = Array.isArray(verificacion) ? verificacion[0] : verificacion;
-        }
-
-        if (!user) {
-          if (status) {
-            status.style.color = '#dc3545';
-            status.textContent = 'Correo o contraseña incorrectos.';
-          }
+        const { error } = await auth.cliente.auth.signInWithPassword({ email: mailVal, password: pwdVal });
+        if (error) {
+          aviso(/invalid login credentials/i.test(error.message) ? 'Correo o contraseña incorrectos.' : 'No se pudo iniciar sesión. Inténtalo de nuevo.', '#dc3545');
           return;
         }
-
-        // 4. Éxito: Guardar sesión y redirigir
-        guardarSesion(user);
-
-        if (status) {
-          status.style.color = '#28a745';
-          status.textContent = `¡Bienvenido ${user.nombre}! Redirigiendo...`;
-        }
-
-        setTimeout(() => {
-          window.location.href = destino(user.rol);
-        }, 600);
-
+        const perfil = await auth.verificar();
+        if (!perfil) return; // verificar() ya redirigió
+        aviso(`¡Bienvenido ${perfil.nombre}! Redirigiendo...`, '#28a745');
+        setTimeout(() => location.replace(destino(perfil.rol)), 500);
       } catch (err) {
         console.error('Falló el login:', err);
-        if (status) {
-          status.style.color = '#dc3545';
-          status.textContent = 'Error al conectar con la base de datos. Abre la consola (F12) para más detalles.';
-        }
+        aviso('Error al conectar con la base de datos. Inténtalo de nuevo.', '#dc3545');
+      } finally {
+        boton.disabled = false;
       }
     });
 
@@ -282,10 +203,14 @@ form.addEventListener('submit', async (event) => {
         }
         recuperarEnviar.disabled = true;
         recuperarStatus.textContent = 'Enviando instrucciones…';
-        setTimeout(() => {
+        const termina = () => {
           recuperarStatus.textContent = 'Si el correo está registrado, recibirás las instrucciones.';
           setTimeout(() => { if (dialog.open) dialog.close(); }, 1600);
-        }, 700);
+        };
+        if (!auth || !auth.cliente || !navigator.onLine) { termina(); return; }
+        auth.cliente.auth.resetPasswordForEmail(recuperarCorreo.value.trim().toLowerCase(), {
+          redirectTo: new URL('login.html', location.href).href
+        }).finally(termina);
       });
     }
   });

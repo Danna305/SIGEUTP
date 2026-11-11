@@ -82,23 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tabla) tabla.querySelectorAll('tbody tr').forEach((tr) => { tr.hidden = !!f && tr.dataset.estado !== f; });
     });
   });
-  const CLAVES_SESION = ['sigep-user-id', 'sigep-nombre', 'sigep-correo', 'sigep-rol', 'sigep-login', 'sigep_sesion'];
+  const CLAVES_SESION = ['sigep_sesion'];
 
+  // La sesión la maneja js/auth.js (Supabase Auth compartido con SIGEP)
   function sesionLocal() {
     try {
-      if (window.SIGEPAuth && typeof window.SIGEPAuth.sesionActual === 'function') {
-        const sesion = window.SIGEPAuth.sesionActual();
-        if (sesion) return sesion;
-      }
-      const guardada = JSON.parse(localStorage.getItem('sigep_sesion') || 'null');
-      const rol = (guardada && guardada.rol) || localStorage.getItem('sigep-rol');
-      if (!rol) return null;
-      return {
-        rol,
-        correo: (guardada && guardada.correo) || localStorage.getItem('sigep-correo') || '',
-        nombre: (guardada && guardada.nombre) || localStorage.getItem('sigep-nombre') || '',
-        userId: (guardada && (guardada.userId || guardada.id)) || localStorage.getItem('sigep-user-id') || ''
-      };
+      return window.SIGEPAuth && typeof window.SIGEPAuth.sesionActual === 'function'
+        ? window.SIGEPAuth.sesionActual()
+        : null;
     } catch (error) {
       return null;
     }
@@ -161,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   pintarSesion();
+  window.SIGEPPintarSesion = pintarSesion;
 });
 
 /* =====================================================================

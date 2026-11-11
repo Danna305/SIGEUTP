@@ -1,66 +1,62 @@
-# SIGEP UTP · PWA de pre-auditoría y seguimiento académico
+# SIGEP UTP · Módulo 3 · Pre-auditoría y seguimiento académico
 
-Aplicación web progresiva (PWA) para la gestión de estadías de la Universidad Tecnológica de Puebla. Implementa el **Módulo 3 (asesor)** para pre-auditoría de tesinas y el **Módulo 4 (alumno)** para consulta de dictámenes, checklist, observaciones y citas.
+PWA para que el **asesor** haga la pre-auditoría de la tesina de sus alumnos (visor del PDF,
+checklist de 10 criterios, chatbot de consulta, dictamen, dictado por voz y citas) y para que
+el **alumno** consulte su dictamen, checklist, observaciones, avisos y citas.
+
+Usa el mismo Supabase y la misma cuenta que el resto de SIGEP: las versiones que revisa son
+las que el alumno sube en el **Módulo 4** (tabla `tesina_versiones`), y el dictamen también
+queda en la tesina del Módulo 4 (`observar_version`) con aviso push al alumno.
 
 ## Estructura
 
 ```text
-SIGEUTP/
-├── index.html                 Splash y redirección por sesión
-├── offline.html               Respaldo offline del Service Worker
-├── manifest.webmanifest       Manifiesto PWA
-├── sw.js                      Service Worker (caché + sync + notificaciones)
+modulo-3/
+├── index.html                 Splash: redirige según la sesión de SIGEP
+├── offline.html               Respaldo sin conexión del service worker
+├── manifest.webmanifest       Manifiesto de la PWA
+├── sw.js                      Service worker (caché, push y Background Sync)
 ├── Frontend/
-│   ├── login.html             Inicio de sesión (Supabase + fallback offline)
-│   ├── modulo-3.html          Vista del asesor (pre-auditoría, checklist, dictamen, citas)
-│   └── modulo-4.html          Vista del alumno (documento, dictamen, checklist, avisos, citas)
+│   ├── login.html             Inicio de sesión con Supabase Auth (cuentas de SIGEP)
+│   ├── modulo-3.html          Vista del asesor: alumnos, pre-auditoría, dictamen y citas
+│   └── alumno.html            Vista del alumno: dictamen, checklist, avisos y citas
 ├── css/
-│   ├── sigep.css              Estilos base, layout responsivo y componentes comunes
-│   └── preauditoria.css       Estilos del módulo de pre-auditoría
+│   ├── sigep.css              Diseño común (con los ajustes de este módulo)
+│   └── preauditoria.css       Estilos de la pre-auditoría
 ├── js/
-│   ├── sigep.js               Íconos, UI común, sesión, SW e instalación PWA
-│   ├── sync.js                Motor híbrido IndexedDB ⇄ Supabase
-│   └── preauditoria.js        Lógica de pre-auditoría, checklist, PDF, citas y notificaciones
-├── BD/
-│   └── supabase.sql           Tablas, RLS, datos de prueba y RPC verificar_login
-├── docs/                      PDFs de ejemplo para el visor offline
-└── img/                       Íconos PWA y recursos de interfaz
+│   ├── auth.js                Sesión y rol (asesor o alumno) con Supabase Auth
+│   ├── sigep.js               Íconos, menú, sesión en pantalla y registro del SW
+│   ├── sync.js                Motor híbrido IndexedDB ⇄ Supabase (cola sin conexión)
+│   └── preauditoria.js        Lógica de la pre-auditoría
+└── img/                       Íconos de la PWA
 ```
 
-## Uso local
+Usa los archivos compartidos de la raíz: `../js/config.js`, `../js/vendor/supabase.js` y
+`../js/vendor/pdfjs/` (para leer el texto del PDF que usa el chatbot).
 
-Una PWA requiere `http://localhost` o HTTPS para registrar el Service Worker. Ejemplo:
+## Base de datos
 
-```powershell
-npx serve .
-```
+Ejecuta `../supabase/modulo-3.sql` en el SQL Editor (después de `esquema.sql` y `tesina.sql`).
+Crea las tablas `dictamenes`, `evaluaciones_checklist`, `notificaciones` y `citas` con reglas
+RLS: el asesor solo escribe sobre sus alumnos asignados y el alumno solo ve lo suyo.
 
-Luego abre la URL local en el navegador.
+La versión anterior tenía su propio proyecto de Supabase, una tabla `usuarios` con
+contraseñas y reglas abiertas a cualquiera; ya no se usan.
 
 ## Acceso
-
-`index.html` redirige a `Frontend/login.html`. Al iniciar sesión se guarda `sigep_sesion` (JSON) y claves de respaldo en `localStorage`, lo que permite reabrir la app sin re-autenticarse constantemente.
 
 | Rol | Destino |
 | --- | --- |
 | Asesor | `Frontend/modulo-3.html` |
-| Alumno | `Frontend/modulo-4.html` |
+| Alumno | `Frontend/alumno.html` |
 
-## Configuración de Supabase
+Si ya iniciaste sesión en otro módulo de SIGEP, `index.html` te lleva directo a tu vista.
+Las cuentas de prueba están en el `README.md` de la raíz.
 
-1. Revisa `SUPABASE_URL` y `SUPABASE_KEY` en `js/sync.js`.
-2. Ejecuta `BD/supabase.sql` en el editor SQL de Supabase.
-3. La tabla `usuarios` usa hashes bcrypt y el login seguro se realiza con la función RPC `verificar_login`.
+## Funcionamiento sin conexión
 
-Tablas sincronizadas: `dictamenes`, `evaluaciones_checklist`, `notificaciones`, `citas`.
-
-## Funcionamiento offline
-
-- El Service Worker precachea el shell y PDFs de ejemplo.
-- Estrategia de caché: **Cache First** para recursos estáticos (mismo origen) y **Network First** para navegación con respaldo en caché / `offline.html`.
-- Los cambios de checklist, dictámenes, observaciones y citas se guardan en IndexedDB (`sigep-preauditoria`, v4) y se sincronizan al recuperar la red.
-- La base de datos remota (Supabase) se consulta en red; en modo offline la app usa IndexedDB como respaldo.
-
-## Tecnologías
-
-HTML5, CSS3, JavaScript ES6+ (Vanilla), Service Worker, Cache API, IndexedDB, Web App Manifest y Supabase JS SDK v2 (CDN).
+- El service worker guarda la app; los archivos de la tesina se guardan en IndexedDB la
+  primera vez que se abren.
+- Checklist, dictámenes, observaciones, avisos y citas se guardan en IndexedDB
+  (`sigep-preauditoria`) y se envían a Supabase al volver la conexión (cola `sync_queue`).
+- Si en el dispositivo entra otra cuenta, se borra lo que guardó la anterior.
