@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis documentos · Módulo 1 · SIGEP UTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/sigep.css">
+<style>
+    /* Estilos para las vistas del menú (Observaciones, etc) */
+    .dashboard-view { display: none; }
+    .dashboard-view.active { display: block; }
+    
+    /* Estilo para la barra verde con porcentaje */
+    .bar-custom { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+    .bar-custom > i { display: block; height: 100%; background: #10b981; border-radius: 6px; transition: width 0.5s ease; }
+    .porcentaje-texto { font-size: 1.5rem; font-weight: 800; color: #10b981; }
+</style>
+</head>
+<body data-modulo="1">
+<div class="shell">
+  <aside class="side">
+    <div class="side-head"><a class="logo" href="portal.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
+    <div class="module-pill"><span class="n">1</span><span><small>Módulo 1</small>Expediente digital</span></div>
+    <div class="side-label">Menú</div>
+    
+    <!-- ENLACES FUNCIONALES -->
+    <nav class="side-nav">
+        <a href="#" class="nav-link active" onclick="cambiarVista('documentos', this)"><i data-ic="folder"></i>Mis documentos</a>
+        <a href="#" class="nav-link" onclick="abrirModalSubir(); return false;"><i data-ic="upload"></i>Subir documento</a>
+        <a href="#" class="nav-link" onclick="cambiarVista('observaciones', this)"><i data-ic="message"></i>Observaciones</a>
+        <a href="#" class="nav-link" onclick="cambiarVista('historial', this)"><i data-ic="history"></i>Historial de versiones</a>
+        <a href="#" class="nav-link" onclick="cambiarVista('avance', this)"><i data-ic="bar"></i>Avance del expediente</a>
+    </nav>
+    
+    <div class="side-foot">
+      <a href="portal.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
+      <button class="side-out" onclick="window.location.href='portal.html'"><i data-ic="logout"></i>Cerrar sesión</button>
+    </div>
+  </aside>
+  
+  <div class="scrim"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" aria-label="Abrir menú"><i data-ic="menu"></i></button>
+      <div class="crumb">SIGEP UTP / Módulo 1 / <b id="crumb-text">Mis documentos</b></div>
+      <div class="top-actions">
+        <!-- La campanita activa las notificaciones -->
+        <button class="icon-btn" aria-label="Notificaciones" onclick="activarNotificaciones()" title="Activar notificaciones push">
+            <i data-ic="bell"></i><span class="dot">3</span>
+        </button>
+        <!-- El avatar cierra la sesión -->
+        <span class="avatar" style="cursor: pointer;" onclick="cerrarSesion()" title="Cerrar Sesión">AB</span>
+      </div>
+    </header>
+    
+    <main class="content">
+      
+      <!-- ================= VISTA: DOCUMENTOS ================= -->
+      <div id="view-documentos" class="dashboard-view active">
+          <div class="page-h">
+            <div><h1>Mis documentos</h1><p class="sub">Expediente de Ana Belén · Periodo Enero – Junio 2026</p></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn out" onclick="activarNotificaciones()"><i data-ic="bell"></i>Activar Notificaciones</button>
+                <button class="btn" onclick="abrirModalSubir()"><i data-ic="upload"></i>Subir documento</button>
+            </div>
+          </div>
+
+          <!-- Tarjetas de estadísticas -->
+          <div class="stats">
+            <div class="stat"><span class="ic-box"><i data-ic="file"></i></span><b id="stat-total">4</b><span>Documentos requeridos</span></div>
+            <div class="stat"><span class="ic-box"><i data-ic="checkCircle"></i></span><b id="stat-aprobados">0</b><span>Aprobados</span></div>
+            <div class="stat"><span class="ic-box"><i data-ic="clock"></i></span><b id="stat-revision">0</b><span>En revisión</span></div>
+            <div class="stat"><span class="ic-box"><i data-ic="alert"></i></span><b id="stat-correccion">0</b><span>Requiere corrección</span></div>
+          </div>
+
+          <!-- Barra de progreso con porcentaje -->
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-h" style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h2 style="margin: 0; font-size: 1rem; color: #475569;">Avance del expediente</h2>
+                    <span class="mono" id="texto-progreso" style="font-size: 0.85rem; color: var(--muted);">0 de 4 subidos</span>
+                </div>
+                <div class="porcentaje-texto" id="porcentaje-avance">0%</div>
+            </div>
+            <div class="bar-custom"><i id="barra-progreso" style="width:0%"></i></div>
+          </div>
+
+          <!-- Filtros y Tabla -->
+          <div class="tabs" data-tabla="#tabla-documentos">
+            <button aria-selected="true" data-filtro="">Todos</button>
+            <button data-filtro="Pendiente">Pendientes</button>
+            <button data-filtro="En revisión">En revisión</button>
+            <button data-filtro="Aprobado">Aprobados</button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="tbl" id="tabla-documentos">
+                <thead><tr><th>Documento</th><th>Fecha de carga</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                    <tr><td colspan="4" style="text-align: center; padding: 20px;">Cargando documentos...</td></tr>
+                </tbody>
+            </table>
+          </div>
+      </div>
+
+      <!-- ================= VISTA: OBSERVACIONES ================= -->
+      <div id="view-observaciones" class="dashboard-view">
+          <div class="page-h"><div><h1>Observaciones</h1><p class="sub">Comentarios de tu asesor</p></div></div>
+          <div class="card">
+              <div class="r" style="border-bottom: 1px solid var(--line); padding-bottom: 15px;">
+                  <span class="ic-box" style="margin:0"><i data-ic="userCheck"></i></span>
+                  <div class="grow" style="margin-left: 10px;">
+                      <b>Dr. Miguel Ángel Flores</b>
+                      <p class="small" style="margin-top: 4px;">"El documento del Seguro Facultativo está vencido, por favor sube uno con la vigencia actual."</p>
+                      <small class="mono">Hace 2 días</small>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- ================= VISTA: HISTORIAL ================= -->
+      <div id="view-historial" class="dashboard-view">
+          <div class="page-h"><div><h1>Historial de versiones</h1><p class="sub">Registro de cambios en tus documentos</p></div></div>
+          <div class="card">
+              <p class="muted" style="text-align: center; padding: 20px;">Aquí aparecerá la línea de tiempo de cada vez que subas o modifiques un documento.</p>
+          </div>
+      </div>
+
+      <!-- ================= VISTA: AVANCE ================= -->
+      <div id="view-avance" class="dashboard-view">
+          <div class="page-h"><div><h1>Avance del expediente</h1><p class="sub">Detalle de tu progreso</p></div></div>
+          <div class="card" style="text-align: center; padding: 40px;">
+              <div class="porcentaje-texto" style="font-size: 4rem;" id="porcentaje-avance-grande">0%</div>
+              <p class="muted" style="margin-top: 10px;">Has completado este porcentaje de tu expediente.</p>
+          </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL PARA SUBIR PDF -->
+<div class="modal-overlay" id="modal-subir" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: var(--surface); padding: 25px; border-radius: var(--r-lg); width: 90%; max-width: 500px;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h3 style="margin: 0;">📤 Subir documento</h3>
+            <button class="modal-cerrar" onclick="cerrarModalSubir()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+        </div>
+        <form id="form-subir-documento">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="tipo-documento" style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem;">Tipo de documento:</label>
+                <select id="tipo-documento" required style="width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-sm);">
+                    <option value="">Selecciona uno...</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="archivo-pdf" style="display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem;">Archivo PDF (máx. 5 MB):</label>
+                <input type="file" id="archivo-pdf" accept="application/pdf" required style="width: 100%;">
+            </div>
+            <div class="modal-botones" style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn out" onclick="cerrarModalSubir()">Cancelar</button>
+                <button type="submit" class="btn" style="background: var(--m1); border-color: var(--m1);">Subir documento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="js/sigep.js"></script>
+<script>
+    const API_URL = "https://paginaideainnovadoraparaappestadias.onrender.com/api"; 
+    const EXPEDIENTE_ID = 1; 
+    
+    let todosLosDocumentos = []; 
+    let tiposDocumentos = []; // Aquí guardaremos INE, Seguro, etc.
+
+    document.addEventListener("DOMContentLoaded", () => {
+        cargarDatosIniciales();
+        const formSubir = document.getElementById("form-subir-documento");
+        if (formSubir) formSubir.addEventListener("submit", subirDocumento);
+    });
+
+    // --- LÓGICA DE NAVEGACIÓN DEL MENÚ LATERAL ---
+    function cambiarVista(vistaId, element) {
+        // 1. Ocultar todas las vistas
+        document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active'));
+        // 2. Mostrar la seleccionada
+        document.getElementById('view-' + vistaId).classList.add('active');
+        
+        // 3. Actualizar clases del menú (resaltar el activo)
+        document.querySelectorAll('.nav-link').forEach(a => {
+            a.removeAttribute('aria-current');
+            a.classList.remove('active');
+            a.style.background = 'none';
+            a.style.color = 'var(--side-text)';
+        });
+        element.setAttribute('aria-current', 'page');
+        element.classList.add('active');
+        element.style.background = 'var(--side-hover)';
+        element.style.color = '#fff';
+        element.style.fontWeight = '600';
+        
+        // 4. Actualizar breadcrumb (la ruta de arriba)
+        const titulos = {
+            'documentos': 'Mis documentos',
+            'observaciones': 'Observaciones',
+            'historial': 'Historial de versiones',
+            'avance': 'Avance del expediente'
+        };
+        document.getElementById('crumb-text').textContent = titulos[vistaId] || 'Módulo 1';
+
+        // 5.Si entra a historial, cargamos los datos
+        if (vistaId === 'historial') {
+            cargarHistorial();
+        }
+    }
+
+    //FUNCIÓN PARA CARGAR EL HISTORIAL
+    async function cargarHistorial() {
+        const contenedor = document.querySelector('#view-historial .card');
+        contenedor.innerHTML = '<p class="muted" style="text-align: center; padding: 20px;">Cargando historial...</p>';
+        
+        try {
+            const response = await fetch(`${API_URL}/historial`);
+            const historial = await response.json();
+            
+            if (historial.length === 0) {
+                contenedor.innerHTML = '<p class="muted" style="text-align: center; padding: 20px;">Aún no hay movimientos registrados.</p>';
+                return;
+            }
+
+            let html = '';
+            historial.forEach(item => {
+                // Formatear la fecha
+                const fechaObj = new Date(item.fecha);
+                const fechaStr = fechaObj.toLocaleDateString('es-MX') + ' a las ' + fechaObj.toLocaleTimeString('es-MX');
+                
+                html += `
+                    <div class="r" style="border-bottom: 1px solid var(--line); padding-bottom: 15px; margin-bottom: 15px;">
+                        <span class="ic-box" style="margin:0"><i data-ic="history"></i></span>
+                        <div class="grow" style="margin-left: 10px;">
+                            <b>${item.accion}</b>
+                            <p class="small" style="margin-top: 4px;">Archivo: <strong>${item.archivo_pdf || 'N/A'}</strong></p>
+                            <small class="mono">${fechaStr} · Por: ${item.usuario}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            contenedor.innerHTML = html;
+            
+            // Volver a pintar los iconos si tu equipo usa esa función
+            if (typeof pintarIconos === 'function') pintarIconos(contenedor);
+            
+        } catch (error) {
+            console.error(error);
+            contenedor.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">❌ Error al cargar el historial.</p>';
+        }
+    }
+
+    // --- CARGA DE DATOS (CRUZANDO TIPOS CON SUBIDOS) ---
+    async function cargarDatosIniciales() {
+        try {
+            // 1. Obtener los tipos de documentos (INE, Seguro, etc)
+            const resTipos = await fetch(`${API_URL}/tipos-documento`);
+            tiposDocumentos = await resTipos.json();
+
+            // Llenar el select del modal
+            const select = document.getElementById("tipo-documento");
+            select.innerHTML = '<option value="">Selecciona uno...</option>';
+            tiposDocumentos.forEach(tipo => {
+                const option = document.createElement("option");
+                option.value = tipo.id;
+                option.textContent = tipo.nombre;
+                select.appendChild(option);
+            });
+
+            // 2. Obtener los documentos subidos por el alumno
+            await cargarDocumentosSubidos();
+
+        } catch (error) { 
+            console.error(error); 
+            document.getElementById("tabla-documentos").querySelector("tbody").innerHTML = 
+                `<tr><td colspan="4" style="text-align: center; color: #e74c3c; padding: 20px;">❌ Error al conectar con el servidor.</td></tr>`;
+        }
+    }
+
+    async function cargarDocumentosSubidos() {
+        const response = await fetch(`${API_URL}/expedientes/${EXPEDIENTE_ID}`);
+        if (!response.ok) throw new Error("Error al cargar expediente");
+        const data = await response.json();
+        todosLosDocumentos = data.documentos;
+
+        // MAGIA: Cruzar tipos con documentos subidos para mostrar los faltantes
+        const documentosCompletos = tiposDocumentos.map(tipo => {
+            // Buscar si el alumno ya subió un documento de este tipo
+            const docSubido = todosLosDocumentos.find(d => d.tipo_documento === tipo.nombre);
+            
+            if (docSubido) {
+                return docSubido; // Ya existe, lo devolvemos tal cual
+            } else {
+                // No existe, creamos un objeto "virtual" en estado Pendiente
+                return {
+                    id: null,
+                    tipo_documento: tipo.nombre,
+                    estado: 'Pendiente',
+                    fecha_subida: null,
+                    version: 0
+                };
+            }
+        });
+
+        renderizarDocumentos(documentosCompletos);
+        actualizarPanel(documentosCompletos);
+    }
+
+    function renderizarDocumentos(documentos) {
+        const tbody = document.getElementById("tabla-documentos").querySelector("tbody");
+        tbody.innerHTML = ""; 
+
+        documentos.forEach((doc) => {
+            let badgeClass = "chip"; 
+            if (doc.estado === "Aprobado") badgeClass = "chip ok";
+            else if (doc.estado === "En revisión") badgeClass = "chip warn";
+            else if (doc.estado === "Requiere corrección") badgeClass = "chip bad";
+
+            let fechaStr = doc.fecha_subida 
+                ? new Date(doc.fecha_subida).toLocaleDateString("es-MX", { day: 'numeric', month: 'short', year: 'numeric' })
+                : "—";
+            
+            let versionStr = doc.version > 0 ? `v${doc.version}` : "Sin archivo";
+            
+            // Botón dinámico
+            let btnHtml = doc.id === null 
+                ? `<button class="btn sm" style="background: var(--m1); color: white; border: none;" onclick="abrirModalSubir()">Subir</button>` // No subido
+                : `<button class="btn out xs">Ver</button>`; // Ya subido
+
+            const fila = document.createElement("tr");
+            fila.setAttribute("data-estado", doc.estado);
+            fila.innerHTML = `
+                <td>
+                    <div class="who">
+                        <span class="ic-box" style="margin:0"><i data-ic="file"></i></span>
+                        <div><b>${doc.tipo_documento}</b><small>PDF · ${versionStr}</small></div>
+                    </div>
+                </td>
+                <td class="num">${fechaStr}</td>
+                <td><span class="${badgeClass}">${doc.estado}</span></td>
+                <td>${btnHtml}</td>
+            `;
+            tbody.appendChild(fila);
+        });
+        if (typeof pintarIconos === 'function') pintarIconos(tbody);
+    }
+
+    function actualizarPanel(documentos) {
+        // Ahora el total se calcula dinámicamente según los documentos que traiga la BD
+        const totalRequeridos = documentos.length; 
+        const totalSubidos = documentos.filter(d => d.id !== null).length;
+
+        // Calculamos el porcentaje
+        let porcentaje = totalRequeridos === 0 ? 0 : Math.round((totalSubidos / totalRequeridos) * 100);
+        
+        // Actualizar barra verde
+        document.getElementById("barra-progreso").style.width = `${porcentaje}%`;
+        document.getElementById("porcentaje-avance").textContent = `${porcentaje}%`;
+        
+        // Si estás en la vista de "Avance", también actualiza el número grande
+        const avanceGrande = document.getElementById("porcentaje-avance-grande");
+        if(avanceGrande) avanceGrande.textContent = `${porcentaje}%`;
+        
+        document.getElementById("texto-progreso").textContent = `${totalSubidos} de ${totalRequeridos} subidos`;
+
+        // Actualizar stats
+        document.getElementById("stat-total").textContent = totalRequeridos;
+        document.getElementById("stat-aprobados").textContent = documentos.filter(d => d.estado === "Aprobado").length;
+        document.getElementById("stat-revision").textContent = documentos.filter(d => d.estado === "En revisión").length;
+        document.getElementById("stat-correccion").textContent = documentos.filter(d => d.estado === "Requiere corrección").length;
+    }
+
+    function abrirModalSubir() { document.getElementById("modal-subir").style.display = "flex"; }
+    function cerrarModalSubir() {
+        document.getElementById("modal-subir").style.display = "none";
+        document.getElementById("form-subir-documento").reset();
+    }
+
+    async function subirDocumento(event) {
+        event.preventDefault();
+        const tipoId = document.getElementById("tipo-documento").value;
+        const archivoInput = document.getElementById("archivo-pdf");
+        if (!archivoInput.files[0]) return alert("Selecciona un archivo PDF");
+
+        const formData = new FormData();
+        formData.append("archivo", archivoInput.files[0]);
+        formData.append("expediente_id", EXPEDIENTE_ID);
+        formData.append("tipo_documento_id", tipoId);
+        formData.append("usuario", "Ana Belén");
+
+        try {
+            const response = await fetch(`${API_URL}/documentos`, { method: "POST", body: formData });
+            if (!response.ok) throw new Error("Error al subir");
+            alert("¡Documento subido con éxito!");
+            cerrarModalSubir();
+            cargarDocumentosSubidos(); // Recargar
+        } catch (error) { alert("Error: " + error.message); }
+    }
+
+    // --- LÓGICA DE NOTIFICACIONES PUSH ---
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+        return outputArray;
+    }
+
+    async function activarNotificaciones() {
+        console.log("Clic en activar notificaciones"); // Para que veas en F12 que sí funciona
+
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            return alert('Tu navegador no soporta notificaciones push.');
+        }
+        try {
+            const permission = await Notification.requestPermission();
+            
+            if (permission !== 'granted') {
+                return alert('Permiso de notificaciones denegado. Debes permitirlo en la configuración de tu navegador.');
+            }
+
+            const register = await navigator.serviceWorker.ready;
+            
+            // Verificamos si ya está suscrito para no duplicar
+            let subscription = await register.pushManager.getSubscription();
+            
+            if (!subscription) {
+                subscription = await register.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array('BOA8gRhd2Zfy5KmyBMpg6gCxmim74kNiGDpaJMsMB8RQBVo70yG80kCjU2hFv4Zdw2uTEv89XQB_sGCfQEjWok4')
+                });
+            }
+
+            await fetch(`${API_URL}/suscribir`, {
+                method: 'POST',
+                body: JSON.stringify(subscription),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            alert('¡Notificaciones activadas con éxito! (Ya puedes recibir avisos)');
+        } catch (error) {
+            console.error('Error al suscribir:', error);
+            alert('Hubo un error al activar las notificaciones. Revisa la consola.');
+        }
+    }   
+    // --- FUNCIÓN PARA EL AVATAR (CERRAR SESIÓN) ---
+    function cerrarSesion() {
+        const confirmar = confirm("¿Estás seguro que deseas cerrar sesión y volver al portal?");
+        if (confirmar) {
+            window.location.href = "portal.html";
+        }
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIGEP UTP · Sistema de Gestión de Estadías</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/sigep.css">
+<style>
+  /* ESTOS SON LOS ESTILOS QUE FALTABAN */
+  .wrap{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+  .p-head{background:var(--side);color:#fff;position:sticky;top:0;z-index:30}
+  .p-head .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+  .p-head .logo small{color:var(--side-muted)}
+  .p-nav{display:flex;gap:4px}
+  .p-nav a{color:var(--side-text);text-decoration:none;font-size:.9rem;padding:8px 12px;border-radius:8px}
+  .p-nav a:hover{background:var(--side-hover)}
+  .hero{background:var(--side);color:#fff;padding-block:48px 92px}
+  .hero .eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;color:var(--side-muted);text-transform:uppercase}
+  .hero h1{font-size:clamp(1.9rem,4.2vw,3rem);font-weight:800;letter-spacing:-.025em;margin:10px 0 12px;max-width:16ch}
+  .hero p{color:var(--side-text);max-width:60ch;font-size:1.02rem}
+  .facts{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:26px;font-size:.88rem;color:var(--side-text)}
+  .facts span{display:flex;align-items:center;gap:8px}
+  .facts svg.i{color:#7FA6FF}
+  .mods{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:-60px}
+  .mod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px -18px rgba(15,27,51,.35)}
+  .mod-top{background:var(--acento-soft);padding:18px;display:flex;gap:12px;align-items:center;min-height:92px}
+  .mod-n{width:40px;height:40px;border-radius:50%;background:var(--acento);color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.1rem;flex:none}
+  .mod-top small{display:block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--acento)}
+  .mod-top h3{font-size:1.02rem;font-weight:700;color:var(--text)}
+  .mod-body{padding:18px;display:grid;gap:12px;flex:1;align-content:start}
+  .mod-body h4{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .mod-body ul{margin:0;padding-left:18px;display:grid;gap:3px;font-size:.86rem}
+  .mod-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.8rem;color:var(--muted)}
+  .mod-foot .btn{background:var(--acento);border-color:var(--acento)}
+  .p-foot{margin-top:56px;border-top:1px solid var(--line);padding-block:24px 40px;color:var(--muted);font-size:.84rem}
+  .p-foot .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  @media (max-width:1100px){.mods{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:700px){.p-nav{display:none}.mods{grid-template-columns:1fr}.hero{padding-block:36px 80px}}
+</style>
+</head>
+<body>
+<header class="p-head">
+  <div class="wrap">
+    <a class="logo" href="#"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Sistema de Gestión de Estadías</small></span></a>
+    <nav class="p-nav"><a href="#modulos">Módulos</a><a href="#beneficios">¿Por qué SIGEP?</a></nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Universidad Tecnológica de Puebla · Estadías profesionales</span>
+    <h1>Todo el proceso de estadías en un solo sistema</h1>
+    <p>Alumnos, asesores y coordinación en una misma plataforma, desde la computadora o el celular.</p>
+    <div class="facts">
+      <span><i data-ic="layers"></i>4 módulos</span>
+      <span><i data-ic="smartphone"></i>Se instala en tu celular</span>
+    </div>
+  </div>
+</section>
+
+<main class="wrap" id="modulos">
+  <div class="mods">
+    <article class="mod" data-modulo="1">
+      <div class="mod-top"><span class="mod-n">1</span><div><small>Módulo 1</small><h3>Expediente digital</h3></div></div>
+      <div class="mod-body">
+        <p class="small">Entrega tus documentos de estadía en línea, sin papel.</p>
+        <ul><li>Sube tus documentos en PDF</li><li>Consulta si ya fueron aprobados</li><li>Corrige y reenvía cuando se pida</li></ul>
+      </div>
+      <div class="mod-foot"><span>Para alumnos</span><a class="btn sm" href="login.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
+    </article>
+
+    <article class="mod" data-modulo="2">
+      <div class="mod-top"><span class="mod-n">2</span><div><small>Módulo 2</small><h3>Administración académica</h3></div></div>
+      <div class="mod-body"><p class="small">Organiza alumnos, asesores, empresas y periodos.</p></div>
+      <div class="mod-foot"><span>Para coordinación</span><a class="btn sm" href="#">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
+    </article>
+
+    <article class="mod" data-modulo="3">
+      <div class="mod-top"><span class="mod-n">3</span><div><small>Módulo 3</small><h3>Seguimiento académico</h3></div></div>
+      <div class="mod-body"><p class="small">Acompaña el avance de cada alumno durante su estadía.</p></div>
+      <div class="mod-foot"><span>Para asesores</span><a class="btn sm" href="#">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
+    </article>
+
+    <article class="mod" data-modulo="4">
+      <div class="mod-top"><span class="mod-n">4</span><div><small>Módulo 4</small><h3>Portal del alumno</h3></div></div>
+      <div class="mod-body"><p class="small">Consulta tu estadía desde la computadora o el celular.</p></div>
+      <div class="mod-foot"><span>Para alumnos</span><a class="btn sm" href="#">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
+    </article>
+  </div>
+</main>
+
+<footer class="p-foot">
+  <div class="wrap"><span>SIGEP UTP · Universidad Tecnológica de Puebla</span><span>Aplicaciones Web Progresivas</span></div>
+</footer>
+<script src="js/sigep.js"></script>
+</body>
+</html>

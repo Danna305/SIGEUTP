@@ -1,0 +1,26 @@
+{
+  "name": "paginaideainnovadoraparaappestadias",
+  "version": "2.0.0",
+  "description": "Backend del Módulo 1: Expediente Digital y Gestion de Documentos",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "pwa",
+    "estadias",
+    "mysql",
+    "express"
+  ],
+  "author": "Ana Belen",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.24.6",
+    "web-push": "^3.6.7"
+  }
+}

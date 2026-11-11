@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Estadías - Módulo 1</title>
+    <!-- Enlace a la hoja de estilos -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Enlace al Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/sigep.css">
+</head>
+<body>
+    <!-- ENCABEZADO -->
+    <header>
+        <h1>Idea creativa: Sistema de Gestión de Estadías</h1>
+        <p>Eslogan: "Optimizando la gestión académica y de estadías con un solo clic"</p>
+    </header>
+    <!-- BARRA DE NAVEGACIÓN -->
+    <nav>
+        <ul>
+            <li><a onclick="showPage('inicio')" id="nav-inicio" class="active-nav">Inicio</a></li>
+            <li><a onclick="showPage('proyecto')" id="nav-proyecto">El Proyecto</a></li>
+            <li><a onclick="showPage('mapa')" id="nav-mapa">Mapa del Sitio</a></li>
+            <li><a onclick="showPage('demo')" id="nav-demo">Demostración</a></li>
+            <li><a onclick="showPage('contacto')" id="nav-contacto">Contacto</a></li>
+        </ul>
+    </nav>
+
+    <!-- CUERPO DE LA PÁGINA -->
+    <main>
+        <!-- PÁGINA 1: INICIO -->
+        <section id="inicio" class="page-section active">
+            <h2>Bienvenido a mi Idea Creativa</h2>
+            <p style="color: #333333 !important;">Hola, soy <strong>Ana Belén</strong> y te doy la bienvenida a la presentación de mi proyecto: el <strong>Módulo 1 de un Sistema de Gestión de Estadías</strong>.</p>
+            <p style="color: #333333 !important;">Este sistema está diseñado para transformar la manera en que las coordinaciones académicas gestionan la asignación de asesores, eliminando el uso de hojas de cálculo manuales y reduciendo los errores humanos.</p>
+            
+            <h3>¿Qué encontrarás en este sitio?</h3>
+            <p style="color: #333333 !important;">Te invito a explorar las diferentes secciones donde explico a detalle cómo funciona mi idea, los beneficios que trae y una <strong>demostración práctica del Módulo 1</strong>, donde podrás subir documentos PDF reales y ver cómo se actualiza el progreso de un expediente en tiempo real.</p>
+            <p style="color: #333333 !important;">Puedes navegar usando el menú superior, el <strong>Mapa del Sitio</strong>, o las flechitas de navegación al final de cada página.</p>
+            
+            <div class="img-container">
+                <img src="img/modulo-1.jpg" alt="Captura de pantalla del proyecto">
+                <p style="color: #333333 !important;"><small>Figura: Optimización de procesos académicos.</small></p>
+            </div>
+
+            <div class="page-navigation">
+                <button class="nav-arrow" disabled>⬅ Anterior</button>
+                <button class="nav-arrow" onclick="showPage('proyecto')">Siguiente ➡</button>
+            </div>
+        </section>
+
+        <!-- PÁGINA 2: EL PROYECTO -->
+        <section id="proyecto" class="page-section">
+            <h2>Sobre el Proyecto</h2>
+            
+            <h3>Problemática</h3>
+            <p style="color: #333333 !important;">Actualmente, en muchas instituciones educativas, la gestión de documentos para estadías se realiza de forma manual o con hojas de cálculo. Esto provoca pérdida de tiempo, duplicidad de datos y una gran dificultad para dar seguimiento al avance de cada alumno.</p>
+            
+            <h3>Nuestra Solución</h3>
+            <p style="color: #333333 !important;">Mi idea innovadora consiste en un <strong>sistema web progresivo (PWA)</strong> que permite a los alumnos <strong>subir sus documentos en formato PDF</strong> (INE, Seguro Facultativo, Carta de Presentación, Reporte Final) a un expediente digital. Los asesores pueden revisar, aprobar o solicitar correcciones, y el sistema <strong>calcula automáticamente el avance del expediente</strong> mediante una barra de progreso.</p>
+            
+            <h3>Beneficios Clave</h3>
+            <ul>
+                <li>✅ <strong>Centralización:</strong> Toda la documentación en un solo lugar seguro (base de datos en la nube).</li>
+                <li>✅ <strong>Seguimiento en tiempo real:</strong> Visualización del avance del expediente (25%, 50%, etc.).</li>
+                <li>✅ <strong>Reducción de errores:</strong> Validación de formatos y estados de los documentos.</li>
+                <li>✅ <strong>Acceso multiplataforma:</strong> Funciona en PC, tablet y celular, e incluso puede instalarse como una app.</li>
+            </ul>
+
+            <div class="page-navigation">
+                <button class="nav-arrow" onclick="showPage('inicio')">⬅ Anterior</button>
+                <button class="nav-arrow" onclick="showPage('mapa')">Siguiente ➡</button>
+            </div>
+        </section>
+
+        <!-- PÁGINA 3: MAPA DEL SITIO -->
+        <section id="mapa" class="page-section">
+            <h2>Mapa del Sitio</h2>
+            <p style="color: #333333 !important;">Explora todas las secciones de este sitio web. Haz clic en cualquiera de las tarjetas para ir directamente a esa página.</p>
+            
+            <div class="mapa-grid">
+                <div class="mapa-card" onclick="showPage('inicio')">
+                    <span class="icono">🏠</span>
+                    <h4>Inicio</h4>
+                    <p style="color: #333333 !important;">Bienvenida y presentación general del proyecto.</p>
+                    <button class="btn-card">Ir a Inicio</button>
+                </div>
+                <div class="mapa-card" onclick="showPage('proyecto')">
+                    <span class="icono">📋</span>
+                    <h4>El Proyecto</h4>
+                    <p style="color: #333333 !important;">Problemática, solución y beneficios de la idea.</p>
+                    <button class="btn-card">Ir a El Proyecto</button>
+                </div>
+                <div class="mapa-card" onclick="showPage('demo')">
+                    <span class="icono">⚙️</span>
+                    <h4>Demostración</h4>
+                    <p style="color: #333333 !important;">Video explicativo y simulador de gestión de documentos.</p>
+                    <button class="btn-card">Ir a Demostración</button>
+                </div>
+                <div class="mapa-card" onclick="showPage('contacto')">
+                    <span class="icono">📧</span>
+                    <h4>Contacto</h4>
+                    <p style="color: #333333 !important;">Información de contacto para dudas o sugerencias.</p>
+                    <button class="btn-card">Ir a Contacto</button>
+                </div>
+            </div>
+
+            <div class="page-navigation">
+                <button class="nav-arrow" onclick="showPage('proyecto')">⬅ Anterior</button>
+                <button class="nav-arrow" onclick="showPage('demo')">Siguiente ➡</button>
+            </div>
+        </section>
+
+
+        <!-- PÁGINA 4: DEMOSTRACIÓN - MÓDULO 1 -->
+        <section id="demo" class="page-section">
+            <h2>Módulo 1: Expediente Digital y Gestión de Documentos</h2>
+
+            <!-- Video demostrativo para el caché -->
+            <p style="color: #333333 !important;">Video demostrativo para el caché:</p>
+            <div class="video-container" style="margin-bottom: 20px;">
+                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Video explicativo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+
+            <p style="color: #333333 !important;">Haz clic en el siguiente botón para acceder al portal del Sistema de Gestión de Estadías (SIGEP UTP).</p>
+            
+            <!-- Botón para abrir el portal en una nueva pestaña (o en la misma) -->
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="portal.html" class="btn" style="font-size: 1.2rem; padding: 15px 30px; background: #db2777; color: white; text-decoration: none; border-radius: 8px; display: inline-block;">
+                    Ir al Portal SIGEP UTP 🚀
+                </a>
+            </div>
+
+            <div class="page-navigation" style="margin-top: 50px;">
+                <button class="nav-arrow" onclick="showPage('mapa')">⬅ Anterior</button>
+                <button class="nav-arrow" onclick="showPage('contacto')">Siguiente ➡</button>
+            </div>
+        </section>
+
+        <!-- PÁGINA 5: CONTACTO -->
+        <section id="contacto" class="page-section">
+            <h2>Contacto</h2>
+            <p style="color: #333333 !important;">Si deseas saber más sobre este proyecto o implementarlo en tu institución, no dudes en contactarme.</p>
+            <p style="color: #333333 !important;"><strong>Correo:</strong> 232384742o@utp.edu.mx</p>
+            <p style="color: #333333 !important;">Agradezco mucho tu interés en esta idea creativa. ¡Estoy segura de que puede marcar una gran diferencia en la gestión académica!</p>
+
+            <div class="page-navigation">
+                <button class="nav-arrow" onclick="showPage('demo')">⬅ Anterior</button>
+                <button class="nav-arrow" disabled>Siguiente ➡</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- PIE DE PÁGINA -->
+    <footer>
+        <div class="social-links">
+            <a href="https://facebook.com" target="_blank">📘 Facebook</a>
+            <a href="https://twitter.com" target="_blank">🐦 Twitter</a>
+            <a href="https://linkedin.com" target="_blank">💼 LinkedIn</a>
+            <a href="https://github.com" target="_blank">💻 GitHub</a>
+        </div>
+        <p>&copy; 2026 Ana Belén. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Enlace al archivo JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>

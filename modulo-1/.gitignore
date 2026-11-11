@@ -1,0 +1,24 @@
+# Dependencias de Node.js
+node_modules/
+backend/node_modules/
+
+# Archivos de configuracion sensibles
+.env
+backend/.env
+
+# Archivos de base de datos local (ya no se usan)
+datos.json
+backend/datos.json
+
+# Archivos subidos por los usuarios
+uploads/
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
