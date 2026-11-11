@@ -842,9 +842,9 @@ function vPerfil() {
 /* =====================================================================
    VISTA: Caché sin conexión (métodos de la API Cache desde la página)
    ===================================================================== */
-const CACHE_NOMBRES = { shell: 'sigep-m2-shell-v7', dinamica: 'sigep-m2-dinamica-v1', datos: M2.CACHE_DATOS };
+const CACHE_NOMBRES = { shell: 'sigep-m2-shell-v8', dinamica: 'sigep-m2-dinamica-v1', datos: M2.CACHE_DATOS };
 const CACHE_INFO = {
-  'sigep-m2-shell-v7': ['App Shell', 'Cache First', 'Archivos base del panel: HTML, CSS, JavaScript, manifiesto e íconos. Se guardan al instalar el Service Worker.'],
+  'sigep-m2-shell-v8': ['App Shell', 'Cache First', 'Archivos base del panel: HTML, CSS, JavaScript, manifiesto e íconos. Se guardan al instalar el Service Worker.'],
   'sigep-m2-dinamica-v1': ['Recursos dinámicos', 'Stale-While-Revalidate', 'Imágenes, video y tipografías. Responde con la copia guardada y la actualiza en segundo plano. Máximo 40 archivos.'],
   'sigep-m2-datos-v1': ['Datos del panel', 'Network First', 'Última copia de los datos leídos de Supabase (datos/estado.json) para consultar el panel sin conexión. Se borra al cerrar sesión.']
 };

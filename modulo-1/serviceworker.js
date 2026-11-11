@@ -2,7 +2,7 @@
 // Páginas y recursos: primero la red y, sin conexión, la copia guardada.
 // Las llamadas a Supabase no se guardan aquí (la app guarda su propia copia
 // del expediente en localStorage para consultarla sin conexión).
-const VERSION = 'm1-v4';
+const VERSION = 'm1-v5';
 const CACHE = `sigep-modulo-1-${VERSION}`;
 const PRECACHE = [
   './',
@@ -24,10 +24,20 @@ const PRECACHE = [
   '../js/vendor/supabase.js',
 ];
 
+// GitHub Pages deja cada archivo 10 minutos en la caché HTTP del navegador.
+// Para no mezclar una página nueva con un JavaScript viejo, el service worker
+// siempre le pregunta al servidor si hay una versión más reciente.
+const fresca = (url) => new Request(url, { cache: 'reload' });
+function red(request) {
+  return request.mode === 'navigate'
+    ? fetch(request.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : fetch(request, { cache: 'no-cache' });
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE)
-      .then((cache) => Promise.all(PRECACHE.map((url) => cache.add(url).catch(() => null))))
+      .then((cache) => Promise.all(PRECACHE.map((url) => cache.add(fresca(url)).catch(() => null))))
       .then(() => self.skipWaiting())
   );
 });
@@ -49,7 +59,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return; // Supabase, fuentes, etc.
 
   event.respondWith(
-    fetch(request)
+    red(request)
       .then((respuesta) => {
         if (respuesta.ok) {
           const copia = respuesta.clone();

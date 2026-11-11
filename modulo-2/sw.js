@@ -7,7 +7,7 @@
 //                                                  la guarda js/datos.js)
 // Los datos vienen de Supabase (otro dominio): el SW no los intercepta.
 // =====================================================================
-const VERSION = 'v7';
+const VERSION = 'v8';
 const CACHE_SHELL = `sigep-m2-shell-${VERSION}`;
 const CACHE_DINAMICA = 'sigep-m2-dinamica-v1';
 const CACHE_DATOS = 'sigep-m2-datos-v1';
@@ -35,6 +35,16 @@ const ARCHIVOS_SHELL = [
 ];
 const FUENTES = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
+// GitHub Pages deja cada archivo 10 minutos en la caché HTTP del navegador.
+// Para no mezclar una página nueva con un JavaScript viejo, el service worker
+// siempre le pregunta al servidor si hay una versión más reciente.
+const fresca = (url) => new Request(url, { cache: 'reload' });
+function red(request) {
+  return request.mode === 'navigate'
+    ? fetch(request.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : fetch(request, { cache: 'no-cache' });
+}
+
 // ---------- Utilidades ----------
 // Copia la respuesta agregando la fecha en que se guardó (encabezado sw-fecha)
 async function conFecha(respuesta) {
@@ -58,7 +68,7 @@ self.addEventListener('install', (event) => {
   console.log('[SW SIGEP] Instalando', VERSION);
   event.waitUntil(
     caches.open(CACHE_SHELL)                               // caches.open()
-      .then((cache) => cache.addAll(ARCHIVOS_SHELL))       // cache.addAll()
+      .then((cache) => cache.addAll(ARCHIVOS_SHELL.map(fresca))) // cache.addAll()
       .then(() => caches.open(CACHE_DINAMICA))
       .then((cache) => cache.add('./img/video-poster.jpg')) // cache.add()
       .then(() => self.skipWaiting())
@@ -86,7 +96,7 @@ async function cacheFirst(request) {
   const guardada = await caches.match(request, { ignoreSearch: true }); // caches.match()
   if (guardada) return guardada;
   try {
-    return await fetch(request);
+    return await red(request);
   } catch (e) {
     if (request.mode === 'navigate') return caches.match(OFFLINE_URL);
     throw e;
@@ -97,7 +107,7 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   const cache = await caches.open(CACHE_DATOS);
   try {
-    const respuesta = await fetch(request);
+    const respuesta = await red(request);
     if (respuesta.ok) await cache.put(request, await conFecha(respuesta)); // cache.put()
     return respuesta;
   } catch (e) {

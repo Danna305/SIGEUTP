@@ -6,7 +6,7 @@
    ===================================================================== */
 'use strict';
 
-const CACHE = 'sigep-preauditoria-v11';
+const CACHE = 'sigep-preauditoria-v12';
 const DB_NAME = 'sigep-preauditoria';
 const DB_VERSION = 4;
 const SYNC_TAG = 'sigep-sync-dictamenes';
@@ -39,10 +39,20 @@ const PRECACHE = [
   '../js/vendor/pdfjs/pdf.worker.min.mjs'
 ];
 
+// GitHub Pages deja cada archivo 10 minutos en la caché HTTP del navegador.
+// Para no mezclar una página nueva con un JavaScript viejo, el service worker
+// siempre le pregunta al servidor si hay una versión más reciente.
+const fresca = (url) => new Request(url, { cache: 'reload' });
+function red(request) {
+  return request.mode === 'navigate'
+    ? fetch(request.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : fetch(request, { cache: 'no-cache' });
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE)
-      .then((cache) => Promise.allSettled(PRECACHE.map((url) => cache.add(url))))
+      .then((cache) => Promise.allSettled(PRECACHE.map((url) => cache.add(fresca(url)))))
       .then(() => self.skipWaiting())
   );
 });
@@ -70,7 +80,7 @@ self.addEventListener('fetch', (event) => {
   // Navegación / documentos: Network First con fallback a caché y offline.html.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      red(request)
         .then((response) => {
           const copia = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copia)).catch(() => {});
@@ -93,7 +103,7 @@ self.addEventListener('fetch', (event) => {
   // La configuración compartida va por red primero (cambia al configurar Supabase)
   if (url.pathname.endsWith('/js/config.js')) {
     event.respondWith(
-      fetch(request)
+      red(request)
         .then((response) => {
           const copia = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copia)).catch(() => {});
@@ -108,7 +118,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(request).then((cacheada) => {
       if (cacheada) return cacheada;
-      return fetch(request).then((response) => {
+      return red(request).then((response) => {
         if (response && response.ok) {
           const copia = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copia)).catch(() => {});

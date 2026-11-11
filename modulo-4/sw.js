@@ -31,7 +31,7 @@
 
 importScripts('js/cola.js'); // define ColaTesina
 
-const VERSION = 'v9';
+const VERSION = 'v10';
 const STATIC_CACHE = `estadias-${VERSION}`;
 const FONT_CACHE = 'estadias-fuentes';
 const API_CACHE = 'estadias-api'; // la llena js/cache-api.js
@@ -94,6 +94,16 @@ const FONT_CSS = [
 ];
 const FONT_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
 
+// GitHub Pages deja cada archivo 10 minutos en la caché HTTP del navegador.
+// Para no mezclar una página nueva con un JavaScript viejo, el service worker
+// siempre le pregunta al servidor si hay una versión más reciente.
+const fresca = (url) => new Request(url, { cache: 'reload' });
+function red(request) {
+  return request.mode === 'navigate'
+    ? fetch(request.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : fetch(request, { cache: 'no-cache' });
+}
+
 /* ==========================================================================
    Ciclo de vida
    ========================================================================== */
@@ -101,7 +111,7 @@ const FONT_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(STATIC_CACHE);
-    await cache.addAll(PRECACHE);
+    await cache.addAll(PRECACHE.map(fresca));
     // Las tipografías son opcionales: si fallan, la instalación continúa
     await precacheFonts().catch(() => {});
     // Activa la versión nueva sin esperar a que se cierren las pestañas
@@ -232,7 +242,7 @@ async function networkFirst(event) {
   const cache = await caches.open(STATIC_CACHE);
 
   try {
-    const response = await fetch(request);
+    const response = await red(request);
     if (response.ok && response.status === 200) {
       event.waitUntil(cache.put(request, response.clone()));
     }
