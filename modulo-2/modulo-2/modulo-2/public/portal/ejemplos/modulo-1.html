@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis documentos · Módulo 1 · SIGEP UTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../css/sigep.css">
+</head>
+<body data-modulo="1">
+<div class="shell">
+  <aside class="side">
+    <div class="side-head"><a class="logo" href="../index.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
+    <div class="module-pill"><span class="n">1</span><span><small>Módulo 1</small>Expediente digital</span></div>
+    <div class="side-label">Menú</div>
+    <nav class="side-nav">
+        <a href="#" aria-current="page"><i data-ic="folder"></i>Mis documentos<span class="count">6</span></a>
+        <a href="#"><i data-ic="upload"></i>Subir documento</a>
+        <a href="#"><i data-ic="message"></i>Observaciones<span class="count alert">2</span></a>
+        <a href="#"><i data-ic="history"></i>Historial de versiones</a>
+        <a href="#"><i data-ic="bar"></i>Avance del expediente</a>
+    </nav>
+    <div class="side-foot">
+      <a href="../index.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
+      <button class="side-out"><i data-ic="logout"></i>Cerrar sesión</button>
+    </div>
+  </aside>
+  <div class="scrim"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" aria-label="Abrir menú"><i data-ic="menu"></i></button>
+      <div class="crumb">SIGEP UTP / Módulo 1 / <b>Mis documentos</b></div>
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notificaciones"><i data-ic="bell"></i><span class="dot">3</span></button>
+        <span class="avatar">AL</span>
+      </div>
+    </header>
+    <main class="content">
+      <div class="page-h"><div><h1>Mis documentos</h1><p class="sub">Expediente de Ana López · Periodo Enero – Junio 2025</p></div><a class="btn" href="#"><i data-ic="upload"></i>Subir documento</a></div>
+      <div class="stats">
+        <div class="stat"><span class="ic-box"><i data-ic="file"></i></span><b>9</b><span>Documentos requeridos</span></div>
+        <div class="stat"><span class="ic-box"><i data-ic="checkCircle"></i></span><b>4</b><span>Aprobados</span></div>
+        <div class="stat"><span class="ic-box"><i data-ic="clock"></i></span><b>2</b><span>En revisión</span></div>
+        <div class="stat"><span class="ic-box"><i data-ic="alert"></i></span><b>1</b><span>Requiere corrección</span></div>
+      </div>
+      <div class="card" style="margin-bottom:16px"><div class="card-h"><h2>Avance del expediente</h2><span class="mono">4 de 9 aprobados</span></div><div class="bar"><i style="width:44%"></i></div></div>
+      <div class="tabs" data-tabla="#docs"><button aria-selected="true" data-filtro="">Todos<span class="count">6</span></button><button data-filtro="Pendiente">Pendientes</button><button data-filtro="En revisión">En revisión</button><button data-filtro="Aprobado">Aprobados</button></div>
+      <div class="table-wrap">
+        <table class="tbl" id="docs"><thead><tr><th>Documento</th><th>Fecha de carga</th><th>Estado</th><th></th></tr></thead><tbody>
+          <tr data-estado="Aprobado"><td><div class="who"><span class="ic-box" style="margin:0"><i data-ic="file"></i></span><div><b>INE</b><small>PDF · 1.2 MB</small></div></div></td><td class="num">3 feb 2025</td><td><span class="chip ok">Aprobado</span></td><td><a class="btn out xs" href="#">Ver</a></td></tr>
+          <tr data-estado="Aprobado"><td><div class="who"><span class="ic-box" style="margin:0"><i data-ic="file"></i></span><div><b>Carta de aceptación</b><small>PDF · 640 KB</small></div></div></td><td class="num">5 feb 2025</td><td><span class="chip ok">Aprobado</span></td><td><a class="btn out xs" href="#">Ver</a></td></tr>
+          <tr data-estado="En revisión"><td><div class="who"><span class="ic-box" style="margin:0"><i data-ic="file"></i></span><div><b>Seguro facultativo (IMSS)</b><small>PDF · 410 KB</small></div></div></td><td class="num">10 feb 2025</td><td><span class="chip warn">En revisión</span></td><td><a class="btn out xs" href="#">Ver</a></td></tr>
+          <tr data-estado="Requiere corrección"><td><div class="who"><span class="ic-box" style="margin:0"><i data-ic="file"></i></span><div><b>Plan de trabajo</b><small>PDF · 980 KB</small></div></div></td><td class="num">12 feb 2025</td><td><span class="chip bad">Requiere corrección</span></td><td><a class="btn out xs" href="#">Subir</a></td></tr>
+          <tr data-estado="Pendiente"><td><div class="who"><span class="ic-box" style="margin:0"><i data-ic="file"></i></span><div><b>Carta de presentación</b><small>—</small></div></div></td><td class="num">—</td><td><span class="chip ">Pendiente</span></td><td><a class="btn out xs" href="#">Subir</a></td></tr>
+          <tr data-estado="Pendiente"><td><div class="who"><span class="ic-box" style="margin:0"><i data-ic="file"></i></span><div><b>Reporte final</b><small>—</small></div></div></td><td class="num">—</td><td><span class="chip ">Pendiente</span></td><td><a class="btn out xs" href="#">Subir</a></td></tr>
+        </tbody></table>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../js/sigep.js"></script>
+</body>
+</html>

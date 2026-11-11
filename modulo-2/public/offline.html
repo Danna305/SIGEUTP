@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sin conexión · SIGEP UTP</title>
+<meta name="theme-color" content="#13213F">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<style>
+  /* Estilos propios para que la página funcione aunque no carguen otros archivos */
+  :root{--bg:#F4F6FB;--surface:#FFFFFF;--text:#0F1B33;--muted:#5B6782;--line:#E3E8F1;--btn:#2563EB;--btn-text:#FFFFFF;--brand:#2563EB;--brand-soft:#E8EFFE;
+        box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  @media (prefers-color-scheme:dark){:root{--bg:#0B1222;--surface:#131C30;--text:#EAF0FB;--muted:#A3AECA;--line:#26324D;--btn:#6B9BFF;--btn-text:#0B1222;--brand:#6B9BFF;--brand-soft:#1B2A4F}}
+  *,*::before,*::after{box-sizing:inherit}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 "Inter",system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;place-items:center;padding:24px}
+  .card{width:min(460px,100%);background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:32px 28px;text-align:center;display:grid;gap:14px;justify-items:center}
+  .logo{width:56px;height:56px;border-radius:14px;background:var(--btn);color:var(--btn-text);display:grid;place-items:center;font:700 1.6rem Georgia,serif}
+  h1{margin:6px 0 0;font-size:1.45rem;line-height:1.2}
+  p{margin:0;color:var(--muted)}
+  .tip{background:var(--brand-soft);border-radius:10px;padding:12px 14px;font-size:.92rem;color:var(--text);text-align:left}
+  .acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+  .btn{display:inline-block;background:var(--btn);color:var(--btn-text);border:1px solid var(--btn);border-radius:8px;padding:10px 18px;font:600 .95rem inherit;font-family:inherit;text-decoration:none;cursor:pointer}
+  .btn.out{background:transparent;color:var(--text);border-color:var(--line)}
+  svg{width:34px;height:34px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo" aria-hidden="true">S</div>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 13a10 10 0 0 1 5.24-2.76"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+    <h1>Estás sin conexión</h1>
+    <p>No pudimos cargar esta página del panel de SIGEP UTP porque no hay internet y aún no estaba guardada en tu dispositivo.</p>
+    <div class="tip"><b>Tip:</b> si ya habías abierto el panel, vuelve a intentarlo: verás la última información guardada. Registrar o modificar datos requiere conexión.</div>
+    <div class="acts">
+      <button class="btn" onclick="location.reload()">Reintentar</button>
+      <a class="btn out" href="./index.html">Ir al inicio</a>
+    </div>
+  </main>
+  <script>
+    // Cuando vuelve la conexión, se recarga la página automáticamente
+    window.addEventListener('online', () => location.reload());
+  </script>
+</body>
+</html>
