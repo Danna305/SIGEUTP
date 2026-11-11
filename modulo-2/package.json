@@ -1,0 +1,19 @@
+{
+  "name": "sigep-utp-admin",
+  "version": "1.0.0",
+  "description": "SIGEP UTP · Módulo 2: Administración y gestión académica (PWA + API REST con Node.js y Express)",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "tunel": "npx --yes cloudflared tunnel --url http://localhost:3000",
+    "reset": "node -e \"require('fs').rmSync('data/db.json',{force:true});console.log('Base de datos reiniciada')\""
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
