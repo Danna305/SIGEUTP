@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sin conexión · SIGEP UTP</title>
+<meta name="description" content="No hay conexión a la red. Las funciones locales del SIGEP UTP siguen disponibles de forma offline.">
+<script>
+(function () {
+  try {
+    const controlador = navigator.serviceWorker && navigator.serviceWorker.controller;
+    const raiz = controlador ? new URL('./', controlador.scriptURL) : new URL('./', location.href);
+    const base = document.createElement('base');
+    base.href = raiz.href;
+    document.head.appendChild(base);
+  } catch (error) {
+    /* si falla, se usan las rutas relativas al documento */
+  }
+})();
+</script>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+<meta name="theme-color" content="#0056b3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SIGEP UTP">
+<link rel="apple-touch-icon" sizes="180x180" href="./img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/sigep.css">
+<style>
+  body{min-height:100vh;display:grid;place-items:center;background:var(--bg);padding:24px}
+  .offline-card{width:min(560px,100%);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:clamp(24px,4vw,40px);box-shadow:var(--sombra-pop);text-align:center;display:grid;justify-items:center;gap:14px}
+  .offline-ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--warn-soft);color:var(--warn);margin-bottom:4px}
+  .offline-ic svg.i{width:30px;height:30px}
+  .offline-card h1{font-size:1.5rem;font-weight:800;letter-spacing:-.015em}
+  .offline-card p{color:var(--muted);font-size:.92rem;max-width:46ch}
+  .offline-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+  .offline-note{display:flex;gap:9px;align-items:flex-start;text-align:left;background:var(--primary-soft);color:var(--primary);border-radius:10px;padding:11px 13px;font-size:.82rem;margin-top:6px;width:100%}
+  .offline-note svg.i{flex:none;margin-top:1px}
+  .offline-foot{font-family:var(--mono);font-size:.72rem;color:var(--faint)}
+</style>
+</head>
+<body data-modulo="3">
+<main class="offline-card">
+  <span class="offline-ic"><i data-ic="alert" data-s="30"></i></span>
+  <span class="chip warn">Sin conexión a la red</span>
+  <h1>No pudimos cargar esta página</h1>
+  <p>Revisa tu conexión a internet. Las funciones locales del SIGEP UTP (visor PDF, checklist, dictámenes y citas guardados en el dispositivo) siguen disponibles aunque no tengas red.</p>
+
+  <div class="offline-actions">
+    <button class="btn" type="button" id="offline-retry"><i data-ic="history"></i>Reintentar</button>
+    <a class="btn out" href="Frontend/modulo-3.html"><i data-ic="clipboard"></i>Módulo 3 (asesor)</a>
+    <a class="btn out" href="Frontend/modulo-4.html"><i data-ic="cap"></i>Módulo 4 (alumno)</a>
+    <a class="btn out" href="Frontend/login.html"><i data-ic="arrowL"></i>Ir al inicio</a>
+  </div>
+
+  <div class="offline-note">
+    <i data-ic="info"></i>
+    <span>Los cambios que realices sin conexión se guardan en la cola local y se sincronizan automáticamente cuando vuelvas a estar en línea.</span>
+  </div>
+
+  <p class="offline-foot" id="offline-status">Esperando conexión…</p>
+</main>
+
+<script src="js/sigep.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const estado = document.getElementById('offline-status');
+    const reintentar = document.getElementById('offline-retry');
+
+    if (reintentar) reintentar.addEventListener('click', () => location.reload());
+
+    const revisar = () => {
+      if (navigator.onLine) {
+        if (estado) estado.textContent = 'Conexión restablecida. Redirigiendo…';
+        window.location.href = new URL('Frontend/login.html', document.baseURI).href;
+      } else if (estado) {
+        estado.textContent = 'Sin conexión. Puedes seguir usando los módulos del SIGEP UTP de forma local.';
+      }
+    };
+
+    revisar();
+    window.addEventListener('online', revisar);
+  });
+</script>
+</body>
+</html>

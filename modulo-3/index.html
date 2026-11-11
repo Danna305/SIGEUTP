@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SIGEP UTP</title>
+  <meta name="description" content="Sistema de Gestión de Estadías de la Universidad Tecnológica de Puebla">
+  
+  <!-- Configuración PWA & Meta Etiquetas -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+  <meta name="theme-color" content="#0056b3">
+  
+  <!-- Soporte iOS Native App -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SIGEP UTP">
+  <link rel="apple-touch-icon" href="./img/apple-touch-icon.png">
+
+  <!-- Fuentes & Estilos Base -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/sigep.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      min-height: 100vh;
+      min-height: 100dvh; /* Altura dinámica para navegadores móviles */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--side, #0f172a);
+      color: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      overflow: hidden;
+    }
+
+    .splash-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .splash-logo {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--primary, #0056b3), #003d80);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    /* Efecto sutil de pulso en el icono */
+    .splash-logo::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 26px;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .splash-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin-bottom: 2px;
+    }
+
+    .splash-subtitle {
+      font-size: 0.85rem;
+      color: var(--side-muted, #94a3b8);
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+
+    /* Spinner de carga PWA nativo */
+    .splash-loader {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(255, 255, 255, 0.15);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-top: 10px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.03); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="splash-container">
+    <div class="splash-logo">
+      <!-- Icono de gorro académico / App -->
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </svg>
+    </div>
+    
+    <div>
+      <h1 class="splash-title">SIGEP UTP</h1>
+      <p class="splash-subtitle">Sistema de Gestión de Estadías</p>
+    </div>
+
+    <div class="splash-loader" aria-label="Cargando"></div>
+  </div>
+
+  <script src="js/sigep.js"></script>
+  <script>
+    // Redirección inteligente al iniciar la PWA
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        try {
+          // Lee la sesión persistida (JSON) o las claves individuales de respaldo.
+          const guardada = JSON.parse(localStorage.getItem('sigep_sesion') || 'null');
+          const rol = (guardada && guardada.rol) || localStorage.getItem('sigep-rol');
+
+          // Si ya hay sesión activa, redirige al módulo correspondiente directamente
+          if (rol === 'asesor') {
+            location.replace('Frontend/modulo-3.html');
+          } else if (rol === 'alumno') {
+            location.replace('Frontend/modulo-4.html');
+          } else {
+            // Si no hay sesión, va al Login
+            location.replace('Frontend/login.html');
+          }
+        } catch (e) {
+          location.replace('Frontend/login.html');
+        }
+      }, 300); // Pequeño delay de 300ms para una transición suave tipo PWA nativa
+    });
+  </script>
+</body>
+</html>
