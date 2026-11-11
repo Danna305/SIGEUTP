@@ -202,12 +202,17 @@
     const total = filas.length;
     const subidos = filas.filter((d) => d.id !== null).length;
     const aprobados = filas.filter((d) => d.estado === 'Aprobado').length;
-    const porcentaje = total ? Math.round((aprobados / total) * 100) : 0;
-    $('barra-progreso').style.width = `${porcentaje}%`;
+    // El avance cuenta cada documento subido, sin importar si ya se aprobó;
+    // dentro de la barra, la parte verde son los aprobados
+    const porcentaje = total ? Math.round((subidos / total) * 100) : 0;
+    const pctAprobados = total ? Math.round((aprobados / total) * 100) : 0;
+    ['barra-progreso', 'barra-progreso-grande'].forEach((id) => { $(id).style.width = `${porcentaje}%`; });
+    ['barra-aprobados', 'barra-aprobados-grande'].forEach((id) => { $(id).style.width = `${pctAprobados}%`; });
+    $('barra-avance').setAttribute('aria-valuenow', String(porcentaje));
     $('porcentaje-avance').textContent = `${porcentaje}%`;
     $('porcentaje-avance-grande').textContent = `${porcentaje}%`;
     $('texto-progreso').textContent = `${subidos} de ${total} subidos · ${aprobados} aprobados`;
-    $('texto-avance-grande').textContent = `${aprobados} de ${total} documentos aprobados. Estado del expediente: ${estado.expediente?.estado_general || 'En proceso'}.`;
+    $('texto-avance-grande').textContent = `${subidos} de ${total} documentos subidos y ${aprobados} aprobados. Estado del expediente: ${estado.expediente?.estado_general || 'En proceso'}.`;
     $('stat-total').textContent = total;
     $('stat-aprobados').textContent = aprobados;
     $('stat-revision').textContent = filas.filter((d) => d.estado === 'En revisión').length;

@@ -18,8 +18,14 @@
     .dashboard-view.active { display: block; }
 
     /* Barra de avance con porcentaje */
-    .bar-custom { height: 12px; background: var(--soft); border-radius: 6px; overflow: hidden; margin-top: 8px; }
-    .bar-custom > i { display: block; height: 100%; background: var(--ok); border-radius: 6px; transition: width 0.5s ease; }
+    .bar-custom { position: relative; height: 12px; background: var(--soft); border-radius: 6px; overflow: hidden; margin-top: 8px; }
+    .bar-custom > i { position: absolute; left: 0; top: 0; display: block; height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+    .bar-custom > .subidos { background: var(--m1); opacity: .45; }   /* subidos (cualquier estado) */
+    .bar-custom > .aprobados { background: var(--ok); }               /* de esos, los aprobados */
+    .bar-leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: .78rem; color: var(--muted); }
+    .bar-leyenda span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+    .bar-leyenda .l-subidos::before { background: var(--m1); opacity: .45; }
+    .bar-leyenda .l-aprobados::before { background: var(--ok); }
     .porcentaje-texto { font-size: 1.5rem; font-weight: 800; color: var(--ok); }
 
     [hidden] { display: none !important; }
@@ -112,7 +118,10 @@
                 </div>
                 <div class="porcentaje-texto" id="porcentaje-avance">0%</div>
             </div>
-            <div class="bar-custom"><i id="barra-progreso" style="width:0%"></i></div>
+            <div class="bar-custom" role="progressbar" id="barra-avance" aria-label="Documentos subidos" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <i class="subidos" id="barra-progreso" style="width:0%"></i><i class="aprobados" id="barra-aprobados" style="width:0%"></i>
+            </div>
+            <div class="bar-leyenda"><span class="l-subidos">Subidos (en revisión, con corrección o aprobados)</span><span class="l-aprobados">Aprobados</span></div>
           </div>
 
           <div class="tabs" data-tabla="#tabla-documentos">
@@ -175,6 +184,8 @@
           <div class="card" style="text-align: center; padding: 40px;">
               <div class="porcentaje-texto" style="font-size: 4rem;" id="porcentaje-avance-grande">0%</div>
               <p class="muted" style="margin-top: 10px;" id="texto-avance-grande">Has completado este porcentaje de tu expediente.</p>
+              <div class="bar-custom" style="max-width: 420px; margin: 18px auto 0;"><i class="subidos" id="barra-progreso-grande" style="width:0%"></i><i class="aprobados" id="barra-aprobados-grande" style="width:0%"></i></div>
+              <div class="bar-leyenda" style="justify-content: center;"><span class="l-subidos">Subidos</span><span class="l-aprobados">Aprobados</span></div>
           </div>
       </div>
     </main>
