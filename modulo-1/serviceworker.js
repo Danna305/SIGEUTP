@@ -2,7 +2,7 @@
 // Páginas y recursos: primero la red y, sin conexión, la copia guardada.
 // Las llamadas a Supabase no se guardan aquí (la app guarda su propia copia
 // del expediente en localStorage para consultarla sin conexión).
-const VERSION = 'm1-v2';
+const VERSION = 'm1-v3';
 const CACHE = `sigep-modulo-1-${VERSION}`;
 const PRECACHE = [
   './',
@@ -12,9 +12,11 @@ const PRECACHE = [
   './styles.css',
   './app.js',
   './js/expediente.js',
+  './js/instalar.js',
   './manifest.json',
   './img/icon-192.png',
   './img/icon-512x512.png',
+  './img/icon-maskable-512.png',
   './img/modulo-1.jpg',
   '../css/sigep.css',
   '../js/sigep.js',
