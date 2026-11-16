@@ -31,7 +31,7 @@
 
 importScripts('js/cola.js'); // define ColaTesina
 
-const VERSION = 'v10';
+const VERSION = 'v11';
 const STATIC_CACHE = `estadias-${VERSION}`;
 const FONT_CACHE = 'estadias-fuentes';
 const API_CACHE = 'estadias-api'; // la llena js/cache-api.js
@@ -70,6 +70,8 @@ const PRECACHE = [
   'js/portal.js',
   'js/alumno.js',
   'js/asesor.js',
+  'js/estadia.js',
+  '../js/rutas.js',
   '../js/vendor/supabase.js',
   '../js/vendor/pdfjs/pdf.min.mjs',
   '../js/vendor/pdfjs/pdf.worker.min.mjs',

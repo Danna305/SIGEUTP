@@ -7,7 +7,7 @@
 //                                                  la guarda js/datos.js)
 // Los datos vienen de Supabase (otro dominio): el SW no los intercepta.
 // =====================================================================
-const VERSION = 'v8';
+const VERSION = 'v9';
 const CACHE_SHELL = `sigep-m2-shell-${VERSION}`;
 const CACHE_DINAMICA = 'sigep-m2-dinamica-v1';
 const CACHE_DATOS = 'sigep-m2-datos-v1';
@@ -25,6 +25,7 @@ const ARCHIVOS_SHELL = [
   './js/app.js',
   './js/radar.js',
   '../js/config.js',
+  '../js/rutas.js',
   '../js/vendor/supabase.js',
   './manifest.json',
   './icons/icon-192.png',

@@ -1,39 +1,61 @@
-# SIGEP UTP · Sistema de Gestión de Estadías
+# SIGEP · Sistema de Gestión de Estadías
 
-Aplicación web progresiva (PWA) de la Universidad Tecnológica de Puebla para la gestión de
-estadías. Cada integrante del equipo desarrolla un módulo; todos usan el mismo diseño, el
-mismo proyecto de Supabase y la misma cuenta (si entras a un módulo, ya entraste a todos).
+Plataforma web progresiva (PWA) para la gestión de estadías profesionales, hecha como
+proyecto del equipo para la Universidad Tecnológica de Puebla. Es **una sola aplicación**:
+una página principal, un solo inicio de sesión y una sola cuenta por persona. Al entrar,
+cada rol ve su propio inicio y el mismo menú en todas las pantallas.
 
-| Módulo | Propuesta | Integrante | Carpeta | Estado |
-| --- | --- | --- | --- | --- |
-| 1 | Expediente digital y gestión de documentos | Belén | `modulo-1/` | Funcional con Supabase |
-| 2 | Administración y gestión académica (coordinación) | Danna | `modulo-2/` | Funcional con Supabase |
-| 3 | Seguimiento académico (pre-auditoría de tesinas) | María José | `modulo-3/` | Funcional con Supabase |
-| 4 | Portal del alumno (tesina por versiones) | Alexia | `modulo-4/` | Funcional con Supabase |
+| Rol | Entra a | Puede |
+| --- | --- | --- |
+| Alumno | Inicio (`modulo-4/alumno.html`) | Ver su estadía de un vistazo y su trazabilidad; subir su expediente y su tesina; ver la pre-auditoría, observaciones y citas |
+| Asesor | Mis alumnos (`modulo-4/asesor.html`) | Pendientes de toda la plataforma; revisar expedientes y tesinas; pre-auditoría, dictamen y citas |
+| Coordinación | Panel (`modulo-2/`) | Alumnos, asesores, asignaciones, periodos, empresas, permisos y Radar de Estadías |
+
+Cada carpeta conserva el trabajo de una integrante del equipo:
+
+| Área | Integrante | Carpeta |
+| --- | --- | --- |
+| Expediente digital | Belén | `modulo-1/` |
+| Coordinación (administración académica) | Danna | `modulo-2/` |
+| Pre-auditoría y seguimiento | María José | `modulo-3/` |
+| Tesina, inicio del alumno y del asesor | Alexia | `modulo-4/` |
 
 ## Estructura
 
 ```
 SIGEUTP/
-├── index.html              Portal de entrada con los 4 módulos
-├── guia.html               Guía visual del diseño común (colores, componentes y su código)
-├── plantilla-modulo.html   Pantalla vacía para empezar un módulo
-├── ejemplos/               Una pantalla de ejemplo por módulo (diseño)
-├── css/sigep.css           Estilos comunes de los 4 módulos
+├── index.html              Página principal del producto (presentación y planes)
+├── login.html              Acceso único: iniciar sesión, registro de alumnos y recuperar contraseña
+├── manifest.webmanifest    Manifiesto de la app (se instala una sola app: SIGEP)
+├── sw.js                   Service worker de la página principal y del acceso
+├── css/sigep.css           Diseño común · css/inicio.css (página principal)
 ├── js/
-│   ├── sigep.js            Íconos, menú en celular y pestañas
-│   ├── config.js           Conexión con Supabase (URL y clave publicable) — compartido
-│   └── vendor/             Librerías compartidas: supabase.js (MIT) y pdfjs/ (Apache 2.0)
-├── supabase/               Base de datos de todos los módulos (ver «Configurar Supabase»)
-├── modulo-1/               Expediente digital: login.html, modulo-1.html, js/expediente.js
-├── modulo-2/               Administración: index.html (panel de coordinación), js/datos.js, js/app.js
-├── modulo-3/               Pre-auditoría: Frontend/login.html, modulo-3.html (asesor), alumno.html
-└── modulo-4/               Portal del alumno: portal.html, alumno.html, asesor.html
+│   ├── rutas.js            Rutas de la plataforma: acceso, inicio de cada rol y cierre de sesión
+│   ├── config.js           Conexión con Supabase (URL y clave publicable)
+│   ├── sigep.js · inicio.js
+│   └── vendor/             supabase.js (MIT) y pdfjs/ (Apache 2.0)
+├── icons/                  Íconos de la app
+├── supabase/               Base de datos (ver «Configurar Supabase»)
+├── modulo-1/               Expediente: modulo-1.html, js/expediente.js
+├── modulo-2/               Coordinación: index.html, js/datos.js, js/app.js, js/radar.js
+├── modulo-3/               Pre-auditoría: Frontend/modulo-3.html (asesor) y Frontend/alumno.html
+├── modulo-4/               Inicio del alumno y del asesor, tesina: alumno.html, asesor.html, js/estadia.js
+└── guia.html · plantilla-modulo.html · ejemplos/   Guía de diseño del equipo
 ```
 
-Cada módulo es su propia PWA (manifiesto, service worker y caché independientes), con
-alcance en su carpeta. Las cachés tienen nombres distintos (`sigep-modulo-1-…`, `sigep-m2-…`,
-`sigep-preauditoria-…`, `estadias-…`) y cada service worker solo borra las suyas.
+- **Un solo acceso:** `login.html` decide a dónde va cada quien. Los accesos anteriores de cada
+  carpeta (`modulo-1/login.html`, `modulo-4/portal.html`…) ahora redirigen aquí, así que los
+  enlaces viejos siguen funcionando.
+- **Una sola navegación:** el menú lateral es el mismo en todas las pantallas de cada rol, sin
+  «módulos»; los estados se llaman igual en toda la plataforma (En revisión, Aprobada,
+  Requiere corrección).
+- **Trazabilidad:** el inicio del alumno y el detalle de cada alumno del asesor muestran una
+  línea de tiempo con cada paso (asignación, documentos, versiones, observaciones, dictámenes
+  y citas), con fecha y autor (`modulo-4/js/estadia.js`).
+- **Una sola app instalable:** todas las páginas usan `manifest.webmanifest` de la raíz. Cada
+  área conserva su service worker con alcance en su carpeta (cachés `sigep-inicio-…`,
+  `sigep-modulo-1-…`, `sigep-m2-…`, `sigep-preauditoria-…`, `estadias-…`) y cada uno solo
+  borra las suyas.
 
 ## Configurar Supabase (una sola vez)
 

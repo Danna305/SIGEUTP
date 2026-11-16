@@ -50,7 +50,7 @@
 
   <div class="offline-actions">
     <button class="btn" type="button" id="offline-retry"><i data-ic="history"></i>Reintentar</button>
-    <a class="btn out" href="Frontend/modulo-3.html"><i data-ic="clipboard"></i>Módulo 3 (asesor)</a>
+    <a class="btn out" href="Frontend/modulo-3.html"><i data-ic="clipboard"></i>Pre-auditoría (asesor)</a>
     <a class="btn out" href="Frontend/alumno.html"><i data-ic="cap"></i>Vista del alumno</a>
     <a class="btn out" href="Frontend/login.html"><i data-ic="arrowL"></i>Ir al inicio</a>
   </div>
@@ -76,7 +76,7 @@
         if (estado) estado.textContent = 'Conexión restablecida. Redirigiendo…';
         window.location.href = new URL('Frontend/login.html', document.baseURI).href;
       } else if (estado) {
-        estado.textContent = 'Sin conexión. Puedes seguir usando los módulos del SIGEP UTP de forma local.';
+        estado.textContent = 'Sin conexión. Puedes seguir usando SIGEP con los datos guardados en este dispositivo.';
       }
     };
 

@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Revisión de tesinas · SIGEP UTP</title>
+  <title>Asesor · SIGEP</title>
   <meta name="description" content="Panel del asesor: revisa las versiones de la tesina de tus alumnos y deja observaciones.">
   <meta name="color-scheme" content="light dark">
 
   <!-- Aplicación web progresiva -->
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#13213F">
   <meta name="apple-mobile-web-app-title" content="Estadías">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -26,6 +26,7 @@
   <script src="js/sigep.js" defer></script>
   <script src="../js/vendor/supabase.js" defer></script>
   <script src="../js/config.js" defer></script>
+  <script src="../js/rutas.js" defer></script>
   <script src="js/toast.js" defer></script>
   <script src="js/cache-api.js" defer></script>
   <script src="js/auth.js" defer></script>
@@ -37,28 +38,28 @@
   <script src="js/comparar.js" defer></script>
   <script src="js/visor.js" defer></script>
   <script src="js/voz.js" defer></script>
+  <script src="js/estadia.js" defer></script>
   <script src="js/asesor.js" defer></script>
   <script src="js/pwa.js" defer></script>
 </head>
-<body data-modulo="4">
+<body>
 <a class="skip" href="#contenido">Saltar al contenido</a>
 
 <div class="shell">
   <!-- ================= MENÚ LATERAL ================= -->
   <aside class="side">
-    <div class="side-head"><a class="logo" href="#alumnos"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
-    <div class="module-pill"><span class="n">4</span><span><small>Módulo 4</small>Revisión de tesinas</span></div>
+    <div class="side-head"><a class="logo" href="#alumnos"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP</b><small>Gestión de Estadías</small></span></a></div>
+    <div class="module-pill"><span class="n"><i data-ic="userCheck" data-s="14"></i></span><span><small>Tu espacio</small>Asesor</span></div>
     <div class="side-label">Menú</div>
-    <nav class="side-nav" aria-label="Menú del asesor">
+    <nav class="side-nav" aria-label="Menú de SIGEP">
       <a href="#alumnos"><i data-ic="users"></i>Mis alumnos<span class="count" id="cuenta-alumnos">0</span></a>
-      <a href="#revisar"><i data-ic="clipboard"></i>Por revisar<span class="count alert" id="cuenta-revisar" hidden></span></a>
-      <a href="../modulo-3/Frontend/modulo-3.html#preauditoria"><i data-ic="clipboard"></i>Pre-auditoría<span class="count">M3</span></a>
-      <a href="../modulo-3/Frontend/modulo-3.html#citas"><i data-ic="calendar"></i>Citas de asesoría<span class="count">M3</span></a>
-      <a href="../modulo-1/modulo-1.html#revisar"><i data-ic="folder"></i>Expedientes<span class="count">M1</span></a>
+      <a href="#revisar"><i data-ic="file"></i>Tesinas por revisar<span class="count alert" id="cuenta-revisar" hidden></span></a>
+      <a href="../modulo-1/modulo-1.html#revisar"><i data-ic="folder"></i>Expedientes</a>
+      <a href="../modulo-3/Frontend/modulo-3.html#preauditoria"><i data-ic="clipboard"></i>Pre-auditoría</a>
+      <a href="../modulo-3/Frontend/modulo-3.html#citas"><i data-ic="calendar"></i>Citas de asesoría</a>
       <a href="#perfil"><i data-ic="user"></i>Mi perfil</a>
     </nav>
     <div class="side-foot">
-      <a href="../index.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
       <button class="side-out" type="button"><i data-ic="logout"></i>Cerrar sesión</button>
     </div>
   </aside>
@@ -68,7 +69,7 @@
     <!-- ================= BARRA SUPERIOR ================= -->
     <header class="topbar">
       <button class="burger" type="button" aria-label="Abrir menú"><i data-ic="menu"></i></button>
-      <div class="crumb">SIGEP UTP / Módulo 4 / <b id="crumb-actual">Mis alumnos</b></div>
+      <div class="crumb">SIGEP / <b id="crumb-actual">Mis alumnos</b></div>
       <div class="top-actions">
         <span class="chip warn estado-red" id="estado-red">Sin conexión</span>
         <a class="icon-btn" href="#revisar" aria-label="Versiones por revisar" title="Versiones por revisar"><i data-ic="bell"></i><span class="dot" id="dot-revisar" hidden></span></a>
@@ -85,6 +86,9 @@
           <a class="btn" href="#revisar"><i data-ic="clipboard"></i>Revisar entregas</a>
         </div>
         <p class="help warn" id="aviso-cache" hidden></p>
+        <h2 class="estadia-titulo">Pendientes en toda la plataforma</h2>
+        <div class="stats" id="asesor-pendientes"></div>
+        <h2 class="estadia-titulo">Tesinas</h2>
         <div class="stats" id="alumnos-stats"></div>
         <div class="table-wrap">
           <table class="tbl">
@@ -105,6 +109,10 @@
         <a class="btn out sm" href="#alumnos" style="margin-bottom:14px"><i data-ic="arrowL" data-s="16"></i>Mis alumnos</a>
         <div class="page-h"><div><h1 id="t-alumno">Alumno</h1><p class="sub" id="alumno-sub"></p></div></div>
         <div class="help"><i data-ic="info"></i><span>Usa <b>Comparar</b> para ver solo lo que cambió desde la versión anterior y <b>Anotar</b> para dejar notas en el lugar exacto del documento. Escribe tus observaciones o graba una nota de voz y, si corresponde, marca la versión como <b>Aprobada</b> o <b>Requiere corrección</b>. El alumno lo verá en su portal.</span></div>
+        <div class="card estadia-card">
+          <div class="card-h"><h2>Trazabilidad del alumno</h2><span class="mono">Expediente, tesina, pre-auditoría y citas</span></div>
+          <div id="alumno-traza"></div>
+        </div>
         <ul class="versiones" id="alumno-versiones"></ul>
       </section>
 

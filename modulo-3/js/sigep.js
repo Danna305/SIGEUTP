@@ -126,13 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Acceso único de SIGEP (login.html en la raíz, ver ../../js/rutas.js)
   function irAlLogin() {
-    const manifest = document.querySelector('link[rel="manifest"]');
-    const controlador = navigator.serviceWorker && navigator.serviceWorker.controller;
-    const raiz = manifest ? new URL('./', manifest.href)
-      : controlador ? new URL('./', controlador.scriptURL)
-      : new URL('./', document.baseURI);
-    window.location.href = new URL('Frontend/login.html', raiz).href;
+    if (window.SIGEP) { window.location.href = window.SIGEP.rutas.login; return; }
+    window.location.href = new URL('../../login.html', document.baseURI).href;
   }
 
   async function cerrarSesion() {

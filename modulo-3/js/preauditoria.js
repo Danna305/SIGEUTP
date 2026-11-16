@@ -15,8 +15,11 @@
   const ICONO = '../img/icono-sigep.svg';
   const API_OBSERVACIONES = '';
   // Estados de tesina_versiones (Módulo 4) ⇄ estados de la pre-auditoría
-  const ESTADO_LOCAL = { 'En revisión': 'Pendiente', 'Aprobada': 'Aprobada', 'Requiere corrección': 'Requiere Correcciones' };
-  const ESTADO_TESINA = { 'Aprobada': 'Aprobada', 'Requiere Correcciones': 'Requiere corrección', 'No pasa': 'Requiere corrección' };
+  // Mismos nombres de estado en toda la plataforma (los de la tesina)
+  const ESTADO_LOCAL = { 'En revisión': 'En revisión', 'Aprobada': 'Aprobada', 'Requiere corrección': 'Requiere corrección' };
+  const ESTADO_TESINA = { 'Aprobada': 'Aprobada', 'Requiere corrección': 'Requiere corrección', 'No pasa': 'Requiere corrección' };
+  // Valores que guardaba la versión anterior (en el dispositivo o en la tabla dictamenes)
+  const normalizarEstado = (valor) => ({ 'Pendiente': 'En revisión', 'Requiere Correcciones': 'Requiere corrección' }[valor] || valor);
   const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
   const SOPORTA_GRABACION = 'MediaRecorder' in window && !!navigator.mediaDevices && !!navigator.mediaDevices.getUserMedia;
   const CANAL = 'BroadcastChannel' in window ? new BroadcastChannel('sigep-preauditoria') : null;
@@ -278,7 +281,7 @@
   // Une la versión de la tesina (servidor) con lo que la pre-auditoría guardó
   // en el dispositivo: checklist, observaciones y texto extraído del PDF.
   function versionDesdeFila(fila, previa) {
-    const estadoServidor = ESTADO_LOCAL[fila.estado] || 'Pendiente';
+    const estadoServidor = ESTADO_LOCAL[fila.estado] || 'En revisión';
     const cambioEnServidor = !previa || previa.estadoServidor !== fila.estado;
     const pendienteLocal = Boolean(previa && previa.estadoEnvio === 'pendiente_envio');
     return {
@@ -293,7 +296,7 @@
       tamano: fila.tamano_bytes,
       comentarioAlumno: fila.comentario || '',
       estadoServidor: fila.estado,
-      estado: pendienteLocal || !cambioEnServidor ? previa.estado : estadoServidor,
+      estado: pendienteLocal || !cambioEnServidor ? normalizarEstado(previa.estado) : estadoServidor,
       actualizado: previa ? (cambioEnServidor && !pendienteLocal ? Date.now() : previa.actualizado) : new Date(fila.subida_en).getTime(),
       observacionAsesor: previa ? previa.observacionAsesor || '' : '',
       checklist: previa && Array.isArray(previa.checklist) && previa.checklist.length ? previa.checklist : checklistInicial(),
@@ -375,7 +378,7 @@
     }, 4200);
   }
 
-  const claseEstado = (valor) => valor === 'Aprobada' ? 'ok' : (valor === 'Requiere Correcciones' || valor === 'No pasa' ? 'bad' : 'warn');
+  const claseEstado = (valor) => valor === 'Aprobada' ? 'ok' : (valor === 'Requiere corrección' || valor === 'No pasa' ? 'bad' : 'warn');
   const etiquetaVersion = (numero) => ['Primera Versión', 'Segunda Versión', 'Tercera Versión'][numero - 1] || `Versión ${numero}`;
   const iniciales = (nombre) => String(nombre || '').split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 
@@ -1212,7 +1215,7 @@
     const enlaces = $$('[data-seccion]');
     const secciones = $$('.mod-seccion');
     if (!enlaces.length || !secciones.length) return;
-    const etiquetas = { alumnos: 'Alumnos asignados', preauditoria: 'Revisión de documentos', citas: 'Citas de asesorías' };
+    const etiquetas = { alumnos: 'Resumen de alumnos', preauditoria: 'Pre-auditoría', citas: 'Citas de asesoría' };
 
     const activar = (id, actualizarHash) => {
       const destino = secciones.find((seccion) => seccion.id === id);
@@ -1261,7 +1264,7 @@
     if (aprobar) aprobar.addEventListener('click', () => dictaminar('Aprobada'));
 
     const corregir = $('#pa-corregir');
-    if (corregir) corregir.addEventListener('click', () => dictaminar('Requiere Correcciones'));
+    if (corregir) corregir.addEventListener('click', () => dictaminar('Requiere corrección'));
 
     const guardarBtn = $('#pa-guardar');
     if (guardarBtn) guardarBtn.addEventListener('click', guardarObservaciones);
@@ -1353,7 +1356,7 @@
       if (!porAlumno.has(version.alumnoId)) porAlumno.set(version.alumnoId, []);
       porAlumno.get(version.alumnoId).push(version);
     });
-    const porRevisar = versiones.filter((version) => version.estado === 'Pendiente').sort((a, b) => (b.actualizado || 0) - (a.actualizado || 0));
+    const porRevisar = versiones.filter((version) => version.estado === 'En revisión').sort((a, b) => (b.actualizado || 0) - (a.actualizado || 0));
     const semana = Date.now() + 7 * 86400000;
     const citasSemana = citas.filter((cita) => cita.estado === 'Programada' && new Date(cita.fecha).getTime() >= Date.now() - 3600000 && new Date(cita.fecha).getTime() <= semana);
     const sinEntrega = estado.alumnos.filter((alumno) => !porAlumno.has(alumno.id));
@@ -1380,7 +1383,7 @@
           ? Math.round(ultima.checklist.filter((item) => item.cumple).length * 100 / ultima.checklist.length) : 0;
         const chip = !ultima ? ['', 'Sin entregas']
           : ultima.estado === 'Aprobada' ? ['ok', 'Aprobada']
-          : ultima.estado === 'Pendiente' ? ['warn', 'Por revisar'] : ['bad', 'En corrección'];
+          : ultima.estado === 'En revisión' ? ['warn', 'Por revisar'] : ['bad', 'En corrección'];
         return `<div class="r"><span class="avatar">${escapar(alumno.iniciales || iniciales(alumno.nombre))}</span>
           <div class="grow" style="min-width:0"><b>${escapar(alumno.nombre)}</b><small>${escapar(alumno.matricula)} · ${suyas.length} ${suyas.length === 1 ? 'versión' : 'versiones'}</small></div>
           <div style="width:min(150px,34%);flex-shrink:0"><div style="display:flex;justify-content:space-between;gap:6px;font-size:.78rem" class="num"><span><span class="chip ${chip[0]}">${chip[1]}</span></span><b>${avance}%</b></div><div class="bar ${avance === 100 ? 'ok' : ''}" style="margin-top:6px"><i style="width:${avance}%"></i></div></div>
@@ -1690,7 +1693,7 @@
     if (!estado.version) return;
     const textarea = $('#pa-observaciones');
     const observacion = textarea ? textarea.value.trim() : '';
-    if (nuevoEstado === 'Requiere Correcciones' && !observacion) {
+    if (nuevoEstado === 'Requiere corrección' && !observacion) {
       toast('Escribe una observación antes de solicitar correcciones.', 'warn');
       if (textarea) textarea.focus();
       return;
@@ -1836,7 +1839,7 @@
     if (version.estado === 'Aprobada') {
       titulo = `Tu versión ${numero} ha sido aprobada`;
       cuerpo = `Hola ${estado.alumno.nombre.split(' ')[0]}, tu asesor aprobó la ${etiquetaVersion(numero)}.`;
-    } else if (version.estado === 'Requiere Correcciones') {
+    } else if (version.estado === 'Requiere corrección') {
       titulo = `Nueva observación disponible en V${numero}`;
       cuerpo = `Revisa las observaciones de tu asesor en la ${etiquetaVersion(numero)}.`;
     } else if (version.estado === 'No pasa') {
@@ -1878,8 +1881,8 @@
       borradores.hidden = true;
       borradores.innerHTML = '';
     }
-    aplicarChip($('#pa-pdf-estado'), 'Pendiente');
-    aplicarChip($('#pa-dictamen-chip'), 'Pendiente');
+    aplicarChip($('#pa-pdf-estado'), 'Sin entregas');
+    aplicarChip($('#pa-dictamen-chip'), 'Sin entregas');
   }
 
   /* ---------- Vista del Alumno ---------- */
@@ -1961,8 +1964,8 @@
   function renderAlumnoStats() {
     const total = estado.versiones.length;
     const aprobadas = estado.versiones.filter((version) => version.estado === 'Aprobada').length;
-    const correcciones = estado.versiones.filter((version) => version.estado === 'Requiere Correcciones' || version.estado === 'No pasa').length;
-    const pendientes = estado.versiones.filter((version) => version.estado === 'Pendiente').length;
+    const correcciones = estado.versiones.filter((version) => version.estado === 'Requiere corrección' || version.estado === 'No pasa').length;
+    const pendientes = estado.versiones.filter((version) => version.estado === 'En revisión').length;
     const mapa = { '#pa-stat-total': total, '#pa-stat-aprobadas': aprobadas, '#pa-stat-correcciones': correcciones, '#pa-stat-pendientes': pendientes };
     Object.entries(mapa).forEach(([selector, valor]) => {
       const elemento = $(selector);
@@ -2008,7 +2011,7 @@
       banner.className = `pa-status-banner ${claseEstado(version.estado)}`;
       if (version.estado === 'Aprobada') {
         banner.innerHTML = `<i data-ic="checkCircle"></i><div><b>Versión aprobada</b><span>Tu asesor aprobó la ${escapar(etiquetaVersion(version.numero))}. No necesitas cambios adicionales.</span></div>`;
-      } else if (version.estado === 'Requiere Correcciones') {
+      } else if (version.estado === 'Requiere corrección') {
         banner.innerHTML = `<i data-ic="alert"></i><div><b>Requiere correcciones</b><span>Revisa las observaciones de tu asesor y sube una nueva versión cuando esté lista.</span></div>`;
       } else if (version.estado === 'No pasa') {
         banner.innerHTML = `<i data-ic="alert"></i><div><b>No pasa la versión</b><span>Revisa las observaciones del asesor y prepara una nueva versión antes de continuar.</span></div>`;
@@ -2098,9 +2101,9 @@
       versiones.forEach((version) => {
         const alumno = alumnosPorId.get(version.alumnoId);
         const nombreAlumno = alumno ? alumno.nombre : 'Alumno';
-        if (version.estado === 'Pendiente') {
+        if (version.estado === 'En revisión') {
           items.push({ id: `entrega:${version.id}`, icono: 'file', titulo: `Entrega por revisar · V${version.numero}`, cuerpo: `${nombreAlumno} · ${version.titulo}`, fecha: version.actualizado, destino: 'preauditoria' });
-        } else if (version.estado === 'Requiere Correcciones' || version.estado === 'No pasa') {
+        } else if (version.estado === 'Requiere corrección' || version.estado === 'No pasa') {
           items.push({ id: `correccion:${version.id}`, icono: 'alert', titulo: `Correcciones recibidas · V${version.numero}`, cuerpo: `${nombreAlumno} · ${version.estado}`, fecha: version.actualizado, destino: 'preauditoria' });
         }
       });
@@ -2112,7 +2115,7 @@
         items.push({ id: `notif:${notificacion.id}`, icono: notificacion.versionId ? 'message' : 'bell', titulo: notificacion.titulo, cuerpo: notificacion.cuerpo, fecha: notificacion.fecha, destino: 'observaciones', leida: Boolean(notificacion.leida) });
       });
       estado.versiones.forEach((version) => {
-        if (version.estado === 'Requiere Correcciones' || version.estado === 'No pasa') {
+        if (version.estado === 'Requiere corrección' || version.estado === 'No pasa') {
           items.push({ id: `correccion:${version.id}`, icono: 'alert', titulo: `Correcciones recibidas · V${version.numero}`, cuerpo: version.observacionAsesor ? String(version.observacionAsesor).slice(0, 90) : version.estado, fecha: version.actualizado, destino: 'observaciones' });
         }
       });
@@ -2422,7 +2425,7 @@
       if (!version) continue;
       const fechaRemota = dictamen.actualizado ? new Date(dictamen.actualizado).getTime() : Date.now();
       if (Number.isFinite(fechaRemota) && fechaRemota < (version.actualizado || 0)) continue;
-      version.estado = dictamen.estado || version.estado;
+      version.estado = normalizarEstado(dictamen.estado) || version.estado;
       if (dictamen.observacion != null) version.observacionAsesor = dictamen.observacion;
       if (Number.isFinite(fechaRemota)) version.actualizado = fechaRemota;
       await guardar('versiones', version).catch(() => {});
@@ -2513,7 +2516,7 @@
   function actualizarNavObservaciones() {
     const contador = $('#pa-nav-obs');
     if (!contador) return;
-    const total = estado.versiones.filter((version) => version.estado === 'Requiere Correcciones' || version.estado === 'No pasa').length;
+    const total = estado.versiones.filter((version) => version.estado === 'Requiere corrección' || version.estado === 'No pasa').length;
     contador.textContent = String(total);
     contador.hidden = total === 0;
   }

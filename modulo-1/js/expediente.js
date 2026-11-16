@@ -61,11 +61,11 @@
   /* ---------- Sesión y rol ---------- */
   async function iniciarSesion() {
     const { data } = await cliente.auth.getSession();
-    if (!data.session) { location.replace('login.html'); return false; }
+    if (!data.session) { SIGEP.irAlLogin(); return false; }
     estado.usuario = data.session.user;
     if (!navigator.onLine) {
       const copia = leerCopia();
-      if (!copia) { location.replace('login.html'); return false; }
+      if (!copia) { SIGEP.irAlLogin(); return false; }
       Object.assign(estado, copia);
       return true;
     }
@@ -78,8 +78,8 @@
     else {
       const copia = leerCopia();
       if (copia) { Object.assign(estado, copia); return true; }
-      await cliente.auth.signOut({ scope: 'local' });
-      location.replace('login.html?sin-rol=1');
+      // Coordinación u otra cuenta: el acceso único la lleva a su propio inicio
+      location.replace(SIGEP.rutas.login);
       return false;
     }
     return true;
@@ -286,19 +286,23 @@
     $('avatar').textContent = iniciales(estado.perfil?.nombre);
     $('avatar').title = estado.perfil?.nombre || '';
     document.querySelectorAll('[data-solo]').forEach((el) => { el.hidden = el.dataset.solo !== estado.rol; });
+    // El logo lleva al inicio de cada rol (misma navegación en toda la plataforma)
+    const logo = document.querySelector('.side-head .logo');
+    if (logo) logo.href = SIGEP.inicioDe(estado.rol);
     if (estado.rol === 'alumno') pintarAlumno(); else pintarAsesor();
     pintarComunes();
   }
 
   /* ---------- Navegación entre vistas ---------- */
-  const TITULOS = { documentos: 'Mis documentos', revisar: 'Revisar documentos', observaciones: 'Observaciones', historial: 'Historial de versiones', avance: 'Avance del expediente' };
+  const TITULOS = { documentos: 'Mi expediente', revisar: 'Expedientes por revisar', observaciones: 'Observaciones', historial: 'Historial de versiones', avance: 'Avance del expediente' };
   function cambiarVista(vista) {
     document.querySelectorAll('.dashboard-view').forEach((v) => v.classList.toggle('active', v.id === `view-${vista}`));
     document.querySelectorAll('.side-nav [data-vista]').forEach((a) => {
       a.classList.toggle('active', a.dataset.vista === vista);
       if (a.dataset.vista === vista) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    $('crumb-text').textContent = TITULOS[vista] || 'Módulo 1';
+    $('crumb-text').textContent = TITULOS[vista] || 'Mi expediente';
+    document.title = `${TITULOS[vista] || 'Mi expediente'} · SIGEP`;
     document.querySelector('.shell')?.classList.remove('menu-abierto');
     if (location.hash !== `#${vista}`) history.replaceState(null, '', `#${vista}`);
   }
@@ -428,7 +432,7 @@
   async function cerrarSesion() {
     try { localStorage.removeItem(claveCopia()); } catch { /* sin almacenamiento */ }
     await cliente.auth.signOut({ scope: 'local' }).catch(() => {});
-    location.replace('login.html');
+    location.replace(SIGEP.rutas.login);
   }
 
   /* ---------- Eventos ---------- */

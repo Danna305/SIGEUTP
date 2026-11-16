@@ -84,7 +84,7 @@ Los permisos de Coordinador y Consulta se cambian en **Usuarios y permisos**.
 
 | Caché | Estrategia | Contenido |
 | --- | --- | --- |
-| sigep-m2-shell-v8 | Cache First | HTML, CSS, JS, manifiesto e íconos |
+| sigep-m2-shell-v9 | Cache First | HTML, CSS, JS, manifiesto e íconos |
 | sigep-m2-dinamica-v1 | Stale-While-Revalidate | Imágenes, video y tipografías (máximo 40) |
 | sigep-m2-datos-v1 | Network First | Última copia de los datos leídos de Supabase |
 

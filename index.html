@@ -1,132 +1,658 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-MX">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SIGEP UTP · Sistema de Gestión de Estadías</title>
-<meta name="description" content="Portal del Sistema de Gestión de Estadías de la UTP: acceso a los 4 módulos.">
+<title>SIGEP · Gestión de Estadías</title>
+<meta name="description" content="SIGEP es la plataforma web que reúne a alumnos, asesores y coordinación para gestionar las estadías profesionales de principio a fin: expediente digital, tesina por versiones, pre-auditoría, dictamen y Radar de Estadías. Se instala y funciona sin conexión.">
+<meta name="theme-color" content="#13213F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="css/sigep.css">
-<style>
-  /* Estilos propios del portal (usa las variables de sigep.css) */
-  .wrap{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
-  .p-head{background:var(--side);color:#fff;position:sticky;top:0;z-index:30}
-  .p-head .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
-  .p-head .logo small{color:var(--side-muted)}
-  .p-nav{display:flex;gap:4px}
-  .p-nav a{color:var(--side-text);text-decoration:none;font-size:.9rem;padding:8px 12px;border-radius:8px}
-  .p-nav a:hover{background:var(--side-hover)}
-  .hero{background:var(--side);color:#fff;padding-block:48px 92px}
-  .hero .eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;color:var(--side-muted);text-transform:uppercase}
-  .hero h1{font-size:clamp(1.9rem,4.2vw,3rem);font-weight:800;letter-spacing:-.025em;margin:10px 0 12px;max-width:16ch}
-  .hero p{color:var(--side-text);max-width:60ch;font-size:1.02rem}
-  .facts{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:26px;font-size:.88rem;color:var(--side-text)}
-  .facts span{display:flex;align-items:center;gap:8px}
-  .facts svg.i{color:#7FA6FF}
-  .mods{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:-60px}
-  .mod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px -18px rgba(15,27,51,.35)}
-  .mod-top{background:var(--acento-soft);padding:18px;display:flex;gap:12px;align-items:center;min-height:92px}
-  .mod-n{width:40px;height:40px;border-radius:50%;background:var(--acento);color:#fff;display:grid;place-items:center;font-weight:800;font-size:1.1rem;flex:none}
-  .mod-top small{display:block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--acento)}
-  .mod-top h3{font-size:1.02rem;font-weight:700;color:var(--text)}
-  .mod-body{padding:18px;display:grid;gap:12px;flex:1;align-content:start}
-  .mod-body h4{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
-  .mod-body ul{margin:0;padding-left:18px;display:grid;gap:3px;font-size:.86rem}
-  .tablas{display:flex;flex-wrap:wrap;gap:5px}
-  .tablas span{font-family:var(--mono);font-size:.7rem;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted)}
-  .mod-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.8rem;color:var(--muted)}
-  .mod-foot .btn{background:var(--acento);border-color:var(--acento)}
-  .sec{padding-block:56px 8px}
-  .sec h2{font-size:1.45rem;font-weight:800;letter-spacing:-.015em}
-  .sec .sub{color:var(--muted);margin-top:4px}
-  .arq{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px;counter-reset:a}
-  .arq .card{display:grid;gap:6px}
-  .arq .card b{font-size:.95rem}
-  .arq .card span{color:var(--muted);font-size:.85rem}
-  .ben{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
-  .ben .card{display:flex;gap:12px;align-items:flex-start}
-  .ben .ic-box{margin:0}
-  .ben b{display:block;font-size:.92rem}.ben span{color:var(--muted);font-size:.84rem}
-  .p-foot{margin-top:56px;border-top:1px solid var(--line);padding-block:24px 40px;color:var(--muted);font-size:.84rem}
-  .p-foot .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  @media (max-width:1100px){.mods{grid-template-columns:repeat(2,1fr)}.arq{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:700px){.p-nav{display:none}.mods,.arq,.ben{grid-template-columns:1fr}.hero{padding-block:36px 80px}}
-</style>
+<link rel="stylesheet" href="css/inicio.css">
+<script>document.documentElement.classList.add('js')</script>
+<script src="js/inicio.js" defer></script>
 </head>
-<body>
-<header class="p-head">
-  <div class="wrap">
-    <a class="logo" href="#"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Sistema de Gestión de Estadías</small></span></a>
-    <nav class="p-nav"><a href="#modulos">Módulos</a><a href="#beneficios">¿Por qué SIGEP?</a></nav>
+<body class="inicio">
+
+<!-- Íconos (se usan con <svg class="i"><use href="#i-nombre"/></svg>) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-cap" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/><path d="M22 10v6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-arrowR" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-checkCircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-userCheck" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M10 21v-5h4v5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-smartphone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 12 19 5"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><path d="M9 13v2M15 13v2"/></symbol>
+  <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4"/></symbol>
+  <symbol id="i-compare" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></symbol>
+  <symbol id="i-wifiOff" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 13a10 10 0 0 1 5.24-2.76"/><line x1="12" y1="20" x2="12.01" y2="20"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></symbol>
+</svg>
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+
+<header class="encabezado">
+  <div class="contenedor encabezado-fila">
+    <a class="logo" href="./" aria-label="SIGEP, Gestión de Estadías: inicio">
+      <span class="logo-mark"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-cap"/></svg></span>
+      <span><b>SIGEP</b><small>Gestión de Estadías</small></span>
+    </a>
+
+    <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal">
+      <svg class="i abre" aria-hidden="true" focusable="false"><use href="#i-menu"/></svg>
+      <svg class="i cierra" aria-hidden="true" focusable="false"><use href="#i-x"/></svg>
+      <span class="sr">Menú</span>
+    </button>
+
+    <nav class="menu" id="menu-principal" aria-label="Principal">
+      <ul class="menu-enlaces">
+        <li><a href="#producto">Producto</a></li>
+        <li><a href="#como-funciona">Cómo funciona</a></li>
+        <li><a href="#para-quien">Para quién</a></li>
+        <li><a href="#seguridad">Seguridad</a></li>
+        <li><a href="#planes">Planes</a></li>
+        <li><a href="#preguntas">Preguntas</a></li>
+      </ul>
+      <div class="menu-acciones">
+        <button class="btn out alto instalar-enc" type="button" data-instalar hidden title="Instalar app">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"/></svg><span class="instalar-txt">Instalar app</span>
+        </button>
+        <a class="enlace-sesion" href="login.html"><span data-sesion>Iniciar sesión</span></a>
+        <a class="btn alto" href="login.html">Probar la plataforma</a>
+      </div>
+    </nav>
   </div>
 </header>
 
-<section class="hero">
-  <div class="wrap">
-    <span class="eyebrow">Universidad Tecnológica de Puebla · Estadías profesionales</span>
-    <h1>Todo el proceso de estadías en un solo sistema</h1>
-    <p>Alumnos, asesores y coordinación en una misma plataforma, desde la computadora o el celular.</p>
-    <div class="facts">
-      <span><i data-ic="layers"></i>4 módulos</span>
-            <span><i data-ic="smartphone"></i>Se instala en tu celular</span>
+<main id="contenido" tabindex="-1">
+
+  <!-- ============ Portada ============ -->
+  <section class="hero" aria-labelledby="hero-titulo">
+    <div class="contenedor hero-grid">
+      <div class="hero-texto">
+        <p class="etiqueta"><span class="pulso" aria-hidden="true"></span>Para universidades tecnológicas</p>
+        <h1 id="hero-titulo">Cada estadía, <span class="resalta">de la asignación al dictamen</span>, en una sola plataforma.</h1>
+        <p class="hero-sub">SIGEP reúne a alumnos, asesores y coordinación en un mismo lugar: expediente digital, tesina por versiones, pre-auditoría, citas y un radar que avisa a tiempo qué alumno necesita atención.</p>
+        <div class="hero-ctas">
+          <a class="btn grande" href="login.html">Probar la plataforma<svg class="i" aria-hidden="true" focusable="false"><use href="#i-arrowR"/></svg></a>
+          <a class="btn grande fantasma" href="#como-funciona">Ver cómo funciona</a>
+        </div>
+        <ul class="hero-datos">
+          <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-key"/></svg>Una cuenta para todos los roles</li>
+          <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-wifiOff"/></svg>Funciona sin internet</li>
+          <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-smartphone"/></svg>Se instala en celular y computadora</li>
+        </ul>
+      </div>
+
+      <div class="vista" role="img" aria-label="Vista de ejemplo de SIGEP: el panel del alumno muestra su expediente con 3 de 4 documentos aprobados y su tesina en la versión 3, aprobada; una notificación avisa que el asesor aprobó la versión 3; el Radar de Estadías de coordinación marca a un alumno en rojo.">
+        <div class="flotante aviso">
+          <span class="aviso-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-bell"/></svg></span>
+          <span><b>Tu asesor aprobó la versión 3</b><small>Tesina · hace 2 min</small></span>
+        </div>
+
+        <div class="ventana">
+          <div class="ventana-barra"><i></i><i></i><i></i><span class="ventana-url">sigep · Mi estadía</span></div>
+          <div class="ventana-cuerpo">
+            <div class="mini-side">
+              <span class="mini-logo"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-cap"/></svg></span>
+              <span class="activo"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-folder"/></svg></span>
+              <span><svg class="i" aria-hidden="true" focusable="false"><use href="#i-file"/></svg></span>
+              <span><svg class="i" aria-hidden="true" focusable="false"><use href="#i-calendar"/></svg></span>
+              <span><svg class="i" aria-hidden="true" focusable="false"><use href="#i-bell"/></svg></span>
+            </div>
+            <div class="mini-main">
+              <div class="mini-h"><b>Mi estadía</b><span class="chip">Sep–dic 2026</span></div>
+              <div class="mini-card">
+                <div class="mini-card-h"><b>Expediente</b><span>3 de 4 aprobados</span></div>
+                <div class="bar ok"><i style="width:75%"></i></div>
+                <ul class="docs">
+                  <li><span>Carta de presentación</span><span class="chip ok">Aprobado</span></li>
+                  <li><span>Carta de aceptación</span><span class="chip ok">Aprobado</span></li>
+                  <li><span>Seguro facultativo IMSS</span><span class="chip ok">Aprobado</span></li>
+                  <li><span>INE</span><span class="chip warn">En revisión</span></li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <div class="mini-card-h"><b>Tesina</b><span class="chip ok"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>v3 · Aprobada</span></div>
+                <div class="versiones">
+                  <span class="v hecho">v1</span><span class="v hecho">v2</span><span class="v actual">v3</span>
+                  <span class="v-txt">Pre-auditoría · 10/10 criterios</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flotante radar-flot">
+          <div class="radar-flot-h"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-radar"/></svg><b>Radar de Estadías</b></div>
+          <ul>
+            <li><span class="sem rojo"></span><span class="cod">UTP-0142</span><span class="pts">86</span></li>
+            <li><span class="sem ambar"></span><span class="cod">UTP-0218</span><span class="pts">54</span></li>
+            <li><span class="sem verde"></span><span class="cod">UTP-0115</span><span class="pts">8</span></li>
+          </ul>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- MÓDULOS: cambia el href de cada botón "Entrar" por la dirección real de cada módulo -->
-<main class="wrap" id="modulos">
-  <div class="mods">
-    <article class="mod" data-modulo="1">
-      <div class="mod-top"><span class="mod-n">1</span><div><small>Módulo 1</small><h3>Expediente digital</h3></div></div>
-      <div class="mod-body">
-        <p class="small">Entrega tus documentos de estadía en línea, sin papel.</p>
-        <ul><li>Sube tus documentos en PDF</li><li>Consulta si ya fueron aprobados</li><li>Corrige y reenvía cuando se pida</li></ul>
+  <!-- ============ Problema → solución ============ -->
+  <section class="seccion" id="producto" aria-labelledby="producto-titulo">
+    <div class="contenedor">
+      <div class="seccion-h centrada">
+        <p class="antetitulo">El problema</p>
+        <h2 id="producto-titulo">Del papel, los correos y las hojas de cálculo a una sola plataforma</h2>
+        <p>Hoy la información de cada estadía vive en muchos lugares a la vez. SIGEP la reúne en uno solo, con el mismo estado para todos.</p>
       </div>
-      <div class="mod-foot"><span>Alumnos y asesores</span><a class="btn sm" href="modulo-1/login.html">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
-    </article>
 
-    <article class="mod" data-modulo="2">
-      <div class="mod-top"><span class="mod-n">2</span><div><small>Módulo 2</small><h3>Administración académica</h3></div></div>
-      <div class="mod-body">
-        <p class="small">Organiza alumnos, asesores, empresas y periodos.</p>
-        <ul><li>Registro de alumnos y asesores</li><li>Asignación de asesores</li><li>Empresas con convenio</li></ul>
+      <div class="contraste">
+        <div class="lado antes">
+          <h3><svg class="i" aria-hidden="true" focusable="false"><use href="#i-folder"/></svg>Sin SIGEP</h3>
+          <ul class="lista-marcas">
+            <li><svg class="i no" aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>Carpetas físicas y copias que se traspapelan o llegan incompletas.</span></li>
+            <li><svg class="i no" aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>Tesinas que van y vienen por correo: <code>tesina_final_v2_ahora_si.docx</code>.</span></li>
+            <li><svg class="i no" aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>Hojas de cálculo distintas en cada carrera, casi siempre desactualizadas.</span></li>
+            <li><svg class="i no" aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>Nadie sabe con certeza quién aprobó qué, ni cuándo.</span></li>
+            <li><svg class="i no" aria-hidden="true" focusable="false"><use href="#i-x"/></svg><span>El alumno en riesgo se detecta cuando ya es tarde.</span></li>
+          </ul>
+        </div>
+
+        <div class="flecha" aria-hidden="true"><svg class="i"><use href="#i-arrowR"/></svg></div>
+
+        <div class="lado despues">
+          <h3><span class="logo-mark mini"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-cap"/></svg></span>Con SIGEP</h3>
+          <ul class="lista-marcas">
+            <li><svg class="i si" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>Expediente digital en PDF, con el estado de cada documento a la vista.</span></li>
+            <li><svg class="i si" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>La tesina se entrega por versiones y las observaciones quedan sobre el propio documento.</span></li>
+            <li><svg class="i si" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>Alumnos, asesores, empresas y periodos en un mismo registro, siempre al día.</span></li>
+            <li><svg class="i si" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>Cada acción queda registrada con fecha y autor.</span></li>
+            <li><svg class="i si" aria-hidden="true" focusable="false"><use href="#i-check"/></svg><span>El Radar de Estadías señala a tiempo a quién atender primero.</span></li>
+          </ul>
+        </div>
       </div>
-      <div class="mod-foot"><span>Coordinación</span><a class="btn sm" href="modulo-2/">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
-    </article>
+    </div>
+  </section>
 
-    <article class="mod" data-modulo="3">
-      <div class="mod-top"><span class="mod-n">3</span><div><small>Módulo 3</small><h3>Seguimiento académico</h3></div></div>
-      <div class="mod-body">
-        <p class="small">Acompaña el avance de cada alumno durante su estadía.</p>
-        <ul><li>Pre-auditoría de la tesina con checklist</li><li>Dictamen y observaciones al alumno</li><li>Citas de asesoría</li></ul>
+  <!-- ============ Para quién ============ -->
+  <section class="seccion alt" id="para-quien" aria-labelledby="roles-titulo">
+    <div class="contenedor">
+      <div class="seccion-h">
+        <p class="antetitulo">Para quién</p>
+        <h2 id="roles-titulo">Una plataforma, tres roles. Cada quien ve lo que le toca.</h2>
+        <p>Todos entran con la misma cuenta y el mismo inicio de sesión; el rol decide qué ve y qué puede hacer cada persona.</p>
       </div>
-      <div class="mod-foot"><span>Asesores y alumnos</span><a class="btn sm" href="modulo-3/">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
-    </article>
 
-    <article class="mod" data-modulo="4">
-      <div class="mod-top"><span class="mod-n">4</span><div><small>Módulo 4</small><h3>Portal del alumno</h3></div></div>
-      <div class="mod-body">
-        <p class="small">Consulta tu estadía desde la computadora o el celular.</p>
-        <ul><li>Entrega de tu tesina por versiones</li><li>Observaciones de tu asesor</li><li>Avisos aunque la app esté cerrada</li></ul>
+      <div class="roles">
+        <article class="rol" data-rol="alumno">
+          <span class="rol-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-user"/></svg></span>
+          <h3>Alumno</h3>
+          <p class="lema">Sabe en todo momento qué le falta y qué sigue.</p>
+          <ul>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Sube su expediente en PDF: carta de presentación, carta de aceptación, seguro facultativo del IMSS e INE.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Ve qué documentos están aprobados y cuáles necesitan corrección, con su historial de versiones.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Entrega su tesina por versiones (PDF o Word) y recibe notas escritas, ancladas al texto y de voz.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Consulta el dictamen de pre-auditoría y el checklist de 10 criterios.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Revisa sus citas y avisos, y recibe notificaciones aunque la app esté cerrada.</li>
+          </ul>
+        </article>
+
+        <article class="rol" data-rol="asesor">
+          <span class="rol-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-userCheck"/></svg></span>
+          <h3>Asesor</h3>
+          <p class="lema">Revisa más rápido y con criterios claros.</p>
+          <ul>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Ve solo a los alumnos que tiene asignados.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Aprueba documentos del expediente o pide correcciones con un comentario.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Compara versiones de la tesina y parte de una pre-revisión automática de formato.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Deja notas ancladas al documento y notas de voz.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Pre-audita con un checklist de 10 criterios y un asistente que responde citando el texto del PDF.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Emite el dictamen y agenda citas.</li>
+          </ul>
+        </article>
+
+        <article class="rol" data-rol="coordinacion">
+          <span class="rol-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-building"/></svg></span>
+          <h3>Coordinación</h3>
+          <p class="lema">Ve el panorama completo y actúa a tiempo.</p>
+          <ul>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Administra alumnos, asesores con capacidad máxima, periodos (uno activo) y empresas con convenio, vigencia y contactos.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Asigna asesores uno a uno, en bloque o en automático, equilibrando la carga.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Define roles y permisos editables: Administrador, Coordinador y Consulta.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Exporta la información a CSV cuando la necesita.</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Sigue a cada alumno con el Radar de Estadías y aplica la acción sugerida con un clic.</li>
+          </ul>
+        </article>
       </div>
-      <div class="mod-foot"><span>Alumnos y asesores</span><a class="btn sm" href="modulo-4/">Entrar<i data-ic="arrowR" data-s="16"></i></a></div>
-    </article>
-  </div>
+    </div>
+  </section>
 
-  <section class="sec" id="beneficios">
-    <h2>¿Por qué SIGEP?</h2>
-    <div class="ben">
-      <div class="card"><span class="ic-box"><i data-ic="folder"></i></span><div><b>Menos papel</b><span>Los documentos se entregan y revisan en línea.</span></div></div>
-      <div class="card"><span class="ic-box"><i data-ic="clock"></i></span><div><b>Seguimiento en tiempo real</b><span>El avance de cada alumno siempre está actualizado.</span></div></div>
-      <div class="card"><span class="ic-box"><i data-ic="smartphone"></i></span><div><b>Acceso desde cualquier lugar</b><span>Funciona en computadora y celular.</span></div></div>
+  <!-- ============ Cómo funciona ============ -->
+  <section class="seccion" id="como-funciona" aria-labelledby="flujo-titulo">
+    <div class="contenedor flujo">
+      <div class="seccion-h flujo-intro">
+        <p class="antetitulo">Cómo funciona</p>
+        <h2 id="flujo-titulo">Un mismo camino, de principio a fin, y todo queda registrado</h2>
+        <p>Cada paso deja huella: quién lo hizo y cuándo. Así cualquier persona autorizada puede reconstruir la historia completa de una estadía.</p>
+        <ul class="leyenda">
+          <li data-rol="coordinacion">Coordinación</li>
+          <li data-rol="alumno">Alumno</li>
+          <li data-rol="asesor">Asesor</li>
+        </ul>
+      </div>
+
+      <ol class="pasos">
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">01</span>
+          <div class="paso-cuerpo">
+            <span class="quien" data-rol="coordinacion">Coordinación</span>
+            <h3>Abre el periodo y asigna asesor</h3>
+            <p>Registra el periodo activo, da de alta a los alumnos y a las empresas con convenio, y asigna a cada alumno su asesor: uno a uno, en bloque o en automático.</p>
+            <p class="registro"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg>Queda registrado: periodo y asignación, con fecha y autor</p>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">02</span>
+          <div class="paso-cuerpo">
+            <span class="quien" data-rol="alumno">Alumno</span>
+            <h3>Sube su expediente</h3>
+            <p>Carta de presentación, carta de aceptación, seguro facultativo del IMSS e INE, en PDF, desde la computadora o el celular.</p>
+            <p class="registro"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg>Queda registrado: cada documento y cada versión</p>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">03</span>
+          <div class="paso-cuerpo">
+            <span class="quien" data-rol="asesor">Asesor</span>
+            <h3>Revisa y aprueba el expediente</h3>
+            <p>Aprueba cada documento o pide una corrección con un comentario. El alumno ve el nuevo estado al momento y recibe un aviso.</p>
+            <p class="registro"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg>Queda registrado: aprobación o corrección, con su comentario</p>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">04</span>
+          <div class="paso-cuerpo">
+            <span class="quien" data-rol="alumno">Alumno</span>
+            <h3>Entrega su tesina por versiones</h3>
+            <p>Sube cada versión en PDF o Word. SIGEP las conserva todas y hace una pre-revisión automática de formato.</p>
+            <p class="registro"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg>Queda registrado: v1, v2, v3… con fecha de entrega</p>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">05</span>
+          <div class="paso-cuerpo">
+            <span class="quien" data-rol="asesor">Asesor</span>
+            <h3>Pre-auditoría y observaciones</h3>
+            <p>Compara versiones, deja notas ancladas y de voz, y evalúa con el checklist de 10 criterios, apoyado por el asistente que cita el texto del PDF.</p>
+            <p class="registro"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg>Queda registrado: cada observación y el checklist</p>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">06</span>
+          <div class="paso-cuerpo">
+            <span class="quien" data-rol="asesor">Asesor</span>
+            <h3>Dictamen</h3>
+            <p>Emite el dictamen: aprobada o requiere corrección. Si hay correcciones, el alumno entrega una nueva versión y el ciclo continúa.</p>
+            <p class="registro"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg>Queda registrado: dictamen, versión dictaminada y autor</p>
+          </div>
+        </li>
+        <li class="paso final">
+          <span class="paso-n" aria-hidden="true"><svg class="i"><use href="#i-check"/></svg></span>
+          <div class="paso-cuerpo">
+            <span class="quien" data-rol="todos">Todos</span>
+            <h3>Expediente completo, estadía concluida</h3>
+            <p>Con el expediente aprobado y la tesina dictaminada, la estadía se cierra con todo su historial disponible para consulta.</p>
+            <p class="registro"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg>Historial completo, de la asignación al cierre</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ Funciones destacadas ============ -->
+  <section class="seccion alt" id="funciones" aria-labelledby="funciones-titulo">
+    <div class="contenedor">
+      <div class="seccion-h centrada">
+        <p class="antetitulo">Funciones destacadas</p>
+        <h2 id="funciones-titulo">Lo que hace diferente a SIGEP</h2>
+        <p>No es solo un lugar para subir archivos: ayuda a revisar, a decidir y a actuar antes de que un problema crezca.</p>
+      </div>
+
+      <div class="bento">
+        <article class="func ancha">
+          <div class="func-texto">
+            <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-radar"/></svg></span>
+            <h3>Radar de Estadías</h3>
+            <p>Cada alumno recibe un puntaje de riesgo de 0 a 100 que considera documentos atrasados, falta de asesor, situación de la empresa y del convenio, documentos rechazados y la carga de su asesor.</p>
+            <ul class="func-puntos">
+              <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Semáforo verde, ámbar y rojo, de un vistazo.</li>
+              <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Una acción sugerida que se aplica con un clic.</li>
+              <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Alerta push a coordinación cuando un alumno pasa a rojo.</li>
+            </ul>
+          </div>
+          <div class="maqueta radar" role="img" aria-label="Ejemplo del Radar de Estadías: UTP-0142 en rojo con 86 puntos por no tener asesor y tener documentos vencidos; dos alumnos en ámbar y uno en verde; la acción sugerida es asignar al asesor con menor carga.">
+            <div class="maqueta-h"><b>Radar · Sep–dic 2026</b><span class="leyenda-sem"><i class="sem verde"></i>0–39 <i class="sem ambar"></i>40–69 <i class="sem rojo"></i>70–100</span></div>
+            <ul class="radar-filas">
+              <li><span class="sem rojo"></span><span class="radar-quien"><b>UTP-0142</b><small>Sin asesor · 2 documentos vencidos</small></span><span class="radar-pts"><span class="medidor rojo"><i style="width:86%"></i></span>86</span></li>
+              <li><span class="sem ambar"></span><span class="radar-quien"><b>UTP-0218</b><small>El convenio vence en 12 días</small></span><span class="radar-pts"><span class="medidor ambar"><i style="width:54%"></i></span>54</span></li>
+              <li><span class="sem ambar"></span><span class="radar-quien"><b>UTP-0307</b><small>Documento rechazado dos veces</small></span><span class="radar-pts"><span class="medidor ambar"><i style="width:47%"></i></span>47</span></li>
+              <li><span class="sem verde"></span><span class="radar-quien"><b>UTP-0115</b><small>Al día</small></span><span class="radar-pts"><span class="medidor verde"><i style="width:8%"></i></span>8</span></li>
+            </ul>
+            <div class="sugerencia">
+              <svg class="i" aria-hidden="true" focusable="false"><use href="#i-zap"/></svg>
+              <span><b>Acción sugerida para UTP-0142</b><small>Asignar al asesor con menor carga</small></span>
+              <span class="btn xs">Aplicar</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="func">
+          <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-bot"/></svg></span>
+          <h3>Pre-auditoría con asistente</h3>
+          <p>Checklist de 10 criterios y un asistente que responde preguntas sobre la tesina citando el texto real del PDF. El dictamen siempre lo decide el asesor.</p>
+          <div class="maqueta chat" role="img" aria-label="Ejemplo del asistente: el asesor pregunta dónde están los objetivos específicos y el asistente responde citando el texto de la página 6 del PDF. El checklist va en 8 de 10 criterios.">
+            <div class="checklist"><span>Checklist</span><span class="bar ok"><i style="width:80%"></i></span><b>8/10</b></div>
+            <p class="burbuja yo">¿Dónde plantea los objetivos específicos?</p>
+            <div class="burbuja bot">
+              <span>En el capítulo 1, página 6:</span>
+              <q>Desarrollar una aplicación web para el control de inventario del almacén.</q>
+              <span class="chip">PDF · pág. 6</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="func">
+          <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-message"/></svg></span>
+          <h3>Versiones, notas ancladas y de voz</h3>
+          <p>Cada entrega se guarda como una versión nueva. El asesor compara, señala el párrafo exacto y, si prefiere, explica con una nota de voz.</p>
+          <div class="maqueta notas" role="img" aria-label="Ejemplo de revisión: versiones 1 y 2 con corrección y versión 3 aprobada; una nota anclada a una cifra del texto pide citar la fuente; una nota de voz de 42 segundos.">
+            <div class="v-fila"><span class="chip bad">v1</span><span class="chip warn">v2</span><span class="chip ok">v3 · Aprobada</span></div>
+            <div class="doc">
+              <i class="linea" style="width:92%"></i>
+              <span class="frase">…se retrasa <mark>el 40 % de los pedidos</mark><sup>1</sup></span>
+              <i class="linea" style="width:74%"></i>
+              <div class="nota"><b>1 · Nota del asesor</b>Cita la fuente de este dato.</div>
+            </div>
+            <div class="voz">
+              <span class="voz-play"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-play"/></svg></span>
+              <span class="onda"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="voz-t">0:42</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="func">
+          <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-wifiOff"/></svg></span>
+          <h3>Sin conexión y avisos push</h3>
+          <p>Si se va el internet, el trabajo no se pierde: se guarda y se envía solo cuando vuelve la conexión. Los avisos llegan aunque la app esté cerrada.</p>
+          <div class="maqueta offline" role="img" aria-label="Ejemplo: sin conexión, la carta de aceptación queda en cola; al volver la conexión se envía; llega una notificación de una cita mañana a las 10:00.">
+            <div class="estado-fila"><span class="chip warn"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-wifiOff"/></svg>Sin conexión</span><span class="archivo">Carta de aceptación.pdf</span><span class="cola">En cola</span></div>
+            <div class="estado-fila"><span class="chip ok"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-refresh"/></svg>En línea</span><span class="archivo">Carta de aceptación.pdf</span><span class="cola ok">Enviado</span></div>
+            <div class="push">
+              <span class="logo-mark mini"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-cap"/></svg></span>
+              <span><b>SIGEP · Cita de asesoría</b><small>Mañana a las 10:00 con tu asesor</small></span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <ul class="extras">
+        <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-compare"/></svg><span><b>Comparador de versiones</b>Qué cambió entre una entrega y otra de la tesina.</span></li>
+        <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-scan"/></svg><span><b>Pre-revisión de formato</b>Revisión automática antes de que el asesor la lea.</span></li>
+        <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-users"/></svg><span><b>Asignación equilibrada</b>En automático, respetando la capacidad de cada asesor.</span></li>
+        <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg><span><b>Roles y permisos</b>Matriz editable: Administrador, Coordinador y Consulta.</span></li>
+        <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-calendar"/></svg><span><b>Citas y avisos</b>Agenda de asesorías y avisos para cada alumno.</span></li>
+        <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"/></svg><span><b>Exportación a CSV</b>Tus datos, listos para cualquier hoja de cálculo.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ Seguridad y trazabilidad ============ -->
+  <section class="seccion" id="seguridad" aria-labelledby="seguridad-titulo">
+    <div class="contenedor seguridad">
+      <div>
+        <div class="seccion-h">
+          <p class="antetitulo">Seguridad y trazabilidad</p>
+          <h2 id="seguridad-titulo">Cada quien ve solo lo suyo. Todo deja huella.</h2>
+          <p>La seguridad no depende de esconder botones: se aplica en la base de datos, en cada consulta y en cada archivo.</p>
+        </div>
+        <ul class="garantias">
+          <li>
+            <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-key"/></svg></span>
+            <h3>Un solo inicio de sesión</h3>
+            <p>Una cuenta para todos, con Supabase Auth. El rol decide lo que cada persona ve.</p>
+          </li>
+          <li>
+            <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-shield"/></svg></span>
+            <h3>Seguridad a nivel de fila</h3>
+            <p>El alumno ve lo suyo; el asesor, solo a sus asignados. La regla vive en la base de datos.</p>
+          </li>
+          <li>
+            <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></span>
+            <h3>Archivos privados</h3>
+            <p>Los documentos se guardan en almacenamiento privado, sin enlaces públicos.</p>
+          </li>
+          <li>
+            <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-database"/></svg></span>
+            <h3>Validación en la base de datos</h3>
+            <p>Cada acción se valida en el servidor, no solo en la pantalla.</p>
+          </li>
+          <li>
+            <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg></span>
+            <h3>Trazabilidad completa</h3>
+            <p>Documentos, versiones, observaciones, dictámenes y asignaciones, con fecha y autor.</p>
+          </li>
+          <li>
+            <span class="func-ic"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-smartphone"/></svg></span>
+            <h3>En cualquier pantalla</h3>
+            <p>Diseño adaptable, instalable en celular y computadora, con avisos push.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bitacora" role="img" aria-label="Ejemplo de historial del expediente UTP-0142: coordinación asignó asesor; el alumno subió la carta de aceptación; el asesor pidió una corrección por falta de firma; el alumno subió la versión 2 y el asesor la aprobó. Cada evento muestra fecha, hora y rol.">
+        <div class="bitacora-h">
+          <svg class="i" aria-hidden="true" focusable="false"><use href="#i-history"/></svg>
+          <span><b>Historial</b><small>Expediente UTP-0142</small></span>
+        </div>
+        <ol>
+          <li class="ev ok"><time>15 nov · 10:42</time><span class="ev-rol">Asesor</span><span>Aprobó «Carta de aceptación» v2</span></li>
+          <li class="ev"><time>14 nov · 18:05</time><span class="ev-rol">Alumno</span><span>Subió «Carta de aceptación» v2</span></li>
+          <li class="ev bad"><time>13 nov · 09:12</time><span class="ev-rol">Asesor</span><span>Pidió corrección: «Falta la firma del responsable»</span></li>
+          <li class="ev"><time>12 nov · 16:30</time><span class="ev-rol">Alumno</span><span>Subió «Carta de aceptación» v1</span></li>
+          <li class="ev"><time>04 nov · 11:00</time><span class="ev-rol">Coordinación</span><span>Asignó asesor para el periodo sep–dic 2026</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Planes ============ -->
+  <section class="seccion alt" id="planes" aria-labelledby="planes-titulo">
+    <div class="contenedor">
+      <div class="seccion-h centrada">
+        <p class="antetitulo">Planes</p>
+        <h2 id="planes-titulo">Empieza con una carrera y crece a toda la universidad</h2>
+        <p>Todas las funciones de alumno, asesor y coordinación desde el primer día.</p>
+      </div>
+
+      <div class="planes">
+        <article class="plan">
+          <h3>Piloto</h3>
+          <p class="plan-desc">Para conocer la plataforma con un grupo real.</p>
+          <p class="precio"><span class="monto">Sin costo</span></p>
+          <ul>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>1 carrera</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Hasta 50 alumnos</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>1 periodo</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Alumno, asesor y coordinación completos</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Instalable en celular y computadora</li>
+          </ul>
+          <a class="btn out alto block" href="login.html">Empezar el piloto</a>
+        </article>
+
+        <article class="plan destacado">
+          <p class="insignia">Recomendado</p>
+          <h3>Institucional</h3>
+          <p class="plan-desc">Para toda la universidad, cuatrimestre tras cuatrimestre.</p>
+          <p class="precio"><span class="monto">$39 <small>MXN</small></span><span class="periodo">por alumno, por cuatrimestre</span></p>
+          <ul>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Carreras ilimitadas</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Todos los periodos, con historial</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Radar de Estadías con alertas push</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Roles y permisos editables</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Exportación a CSV</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Soporte durante todo el cuatrimestre</li>
+          </ul>
+          <a class="btn alto block" href="login.html">Probar la plataforma</a>
+        </article>
+
+        <article class="plan">
+          <h3>Red universitaria</h3>
+          <p class="plan-desc">Para universidades con varias sedes.</p>
+          <p class="precio"><span class="monto">A la medida</span></p>
+          <ul>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Todo lo del plan Institucional</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Varias sedes en una sola plataforma</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Acompañamiento en la migración de información</li>
+            <li><svg class="i" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>Capacitación para coordinación y asesores</li>
+          </ul>
+          <a class="btn out alto block" href="#preguntas">Ver preguntas frecuentes</a>
+        </article>
+      </div>
+
+      <p class="nota-precios"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-info"/></svg>Precios hipotéticos — proyecto académico. No constituyen una oferta comercial.</p>
+    </div>
+  </section>
+
+  <!-- ============ Preguntas frecuentes ============ -->
+  <section class="seccion" id="preguntas" aria-labelledby="preguntas-titulo">
+    <div class="contenedor">
+      <div class="seccion-h centrada">
+        <p class="antetitulo">Preguntas frecuentes</p>
+        <h2 id="preguntas-titulo">Lo que suelen preguntar las universidades</h2>
+      </div>
+
+      <div class="faq">
+        <details>
+          <summary>¿Funciona sin internet?<svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></summary>
+          <div class="respuesta"><p>Sí. Lo que ya se abrió se puede consultar sin conexión, y lo que el usuario envía mientras está desconectado se guarda en el dispositivo y se sincroniza solo cuando vuelve la conexión (Background Sync).</p></div>
+        </details>
+        <details>
+          <summary>¿Se instala como una app?<svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></summary>
+          <div class="respuesta"><p>Sí. SIGEP es una aplicación web progresiva: se instala desde el navegador en el celular o la computadora, sin pasar por una tienda de aplicaciones, y se abre como cualquier otra app.</p></div>
+        </details>
+        <details>
+          <summary>¿Quién ve los documentos?<svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></summary>
+          <div class="respuesta"><p>El alumno ve solo los suyos; el asesor, solo los de los alumnos que tiene asignados; y coordinación, según los permisos de su rol (Administrador, Coordinador o Consulta). La regla se aplica en la base de datos con seguridad a nivel de fila y los archivos se guardan en almacenamiento privado.</p></div>
+        </details>
+        <details>
+          <summary>¿Las notificaciones llegan con la app cerrada?<svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></summary>
+          <div class="respuesta"><p>Sí, una vez que la persona da permiso de notificaciones. Los alumnos reciben avisos de revisiones, dictámenes y citas, y coordinación recibe una alerta cuando un alumno pasa a rojo en el Radar de Estadías.</p></div>
+        </details>
+        <details>
+          <summary>¿Cómo funciona el asistente de la pre-auditoría?<svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></summary>
+          <div class="respuesta"><p>El asesor le hace preguntas sobre la tesina y el asistente responde citando el texto real del PDF, para que se pueda comprobar en el documento. Es un apoyo: el checklist y el dictamen siempre los decide el asesor.</p></div>
+        </details>
+        <details>
+          <summary>¿Cómo se migra la información?<svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></summary>
+          <div class="respuesta"><p>La información base (alumnos, asesores, empresas, convenios y periodos) se captura desde el panel de coordinación. Recomendamos empezar con un piloto de una carrera y un periodo; para varias sedes, el plan Red universitaria incluye acompañamiento en la migración.</p></div>
+        </details>
+        <details>
+          <summary>¿Qué necesita la universidad?<svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></summary>
+          <div class="respuesta"><p>Un navegador actualizado y conexión a internet para empezar; no hace falta instalar servidores propios. Lo importante es definir quién coordina las estadías y qué asesores participan en el periodo.</p></div>
+        </details>
+        <details>
+          <summary>¿Se pueden ajustar los roles y permisos?<svg class="i" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></summary>
+          <div class="respuesta"><p>Sí. Coordinación cuenta con una matriz editable de roles y permisos para Administrador, Coordinador y Consulta, de modo que cada persona tenga solo el acceso que necesita.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Llamado final ============ -->
+  <section class="cta-final" aria-labelledby="cta-titulo">
+    <div class="contenedor">
+      <div class="cta-caja">
+        <div>
+          <h2 id="cta-titulo">Lleva las estadías de tu universidad a una sola plataforma</h2>
+          <p>Empieza con una carrera, un periodo y tus propios asesores. Sin papel, sin correos perdidos y con todo el historial en orden.</p>
+        </div>
+        <div class="cta-acciones">
+          <a class="btn grande" href="login.html">Probar la plataforma<svg class="i" aria-hidden="true" focusable="false"><use href="#i-arrowR"/></svg></a>
+          <button class="btn grande fantasma" type="button" data-instalar hidden><svg class="i" aria-hidden="true" focusable="false"><use href="#i-download"/></svg>Instalar app</button>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 
-<footer class="p-foot">
-  <div class="wrap"><span>SIGEP UTP · Universidad Tecnológica de Puebla</span><span>Aplicaciones Web Progresivas · Ingeniería en Desarrollo y Gestión de Software</span></div>
+<footer class="pie">
+  <div class="contenedor">
+    <div class="pie-grid">
+      <div class="pie-marca">
+        <a class="logo" href="./" aria-label="SIGEP, Gestión de Estadías: inicio">
+          <span class="logo-mark"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-cap"/></svg></span>
+          <span><b>SIGEP</b><small>Gestión de Estadías</small></span>
+        </a>
+        <p>Proyecto académico · Universidad Tecnológica de Puebla</p>
+        <p>Equipo: Belén, Danna, María José y Alexia.</p>
+      </div>
+      <nav aria-label="Secciones">
+        <p class="pie-titulo">Producto</p>
+        <ul>
+          <li><a href="#producto">Producto</a></li>
+          <li><a href="#como-funciona">Cómo funciona</a></li>
+          <li><a href="#para-quien">Para quién</a></li>
+          <li><a href="#funciones">Funciones</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Más información">
+        <p class="pie-titulo">Más</p>
+        <ul>
+          <li><a href="#seguridad">Seguridad</a></li>
+          <li><a href="#planes">Planes</a></li>
+          <li><a href="#preguntas">Preguntas</a></li>
+          <li><a href="login.html">Iniciar sesión</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="pie-base">
+      <p>© 2026 SIGEP · Proyecto académico sin fines comerciales.</p>
+      <a href="guia.html">Guía de diseño</a>
+    </div>
+  </div>
 </footer>
-<script src="js/sigep.js"></script>
 </body>
 </html>

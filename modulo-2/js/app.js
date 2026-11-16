@@ -56,7 +56,7 @@ const CARRERAS = { ISC: 'Ing. en Sistemas Computacionales', IMT: 'Ing. en Mecatr
 // Documentos del expediente digital (Módulo 1)
 const DOCS = [['presentacion', 'Carta de presentación'], ['aceptacion', 'Carta de aceptación'], ['seguro', 'Seguro facultativo (IMSS)'], ['ine', 'Identificación oficial (INE)']];
 const NIVELES = { TSU: 'TSU', 'Ingeniería': 'Ingeniería' };
-const EST_DOC = { pendiente: ['Pendiente', ''], cargado: ['En revisión', 'info'], aprobado: ['Aprobado', 'ok'], rechazado: ['Rechazado', 'bad'] };
+const EST_DOC = { pendiente: ['Pendiente', ''], cargado: ['En revisión', 'info'], aprobado: ['Aprobado', 'ok'], rechazado: ['Requiere corrección', 'bad'] };
 const EST_AL = { activo: ['Activo', 'ok'], baja: ['Baja', 'bad'], concluido: ['Concluido', ''] };
 const carreraDe = (c) => CARRERAS[c] || 'Sin carrera';
 const EST_PER = { activo: ['Activo', 'ok'], planeado: ['Planeado', 'info'], cerrado: ['Cerrado', ''] };
@@ -111,7 +111,7 @@ async function api(metodo, ruta, cuerpo) {
   try {
     return await M2.pedir(metodo, ruta, cuerpo);
   } catch (e) {
-    if (e.status === 401 && SESION) { cerrarSesion(); go('#/login'); }
+    if (e.status === 401 && SESION) { cerrarSesion(); SIGEP.irAlLogin('sesion'); }
     throw e;
   }
 }
@@ -211,7 +211,7 @@ function route() {
   const p = location.hash.replace(/^#\/?/, '').split('/');
   UI.pop = null;
   if (p[0] === 'app') {
-    if (!SESION) { go('#/login'); return; }
+    if (!SESION) { SIGEP.irAlLogin(); return; }
     if (!S) {
       $('#root').innerHTML = '<div class="login"><p class="muted">Cargando el panel…</p></div>';
       cargarEstado().then(route).catch((e) => toast(e.message));
@@ -220,8 +220,9 @@ function route() {
     renderApp(p[1] || 'dashboard', p[2]);
     return;
   }
-  if (p[0] === 'login') { renderLogin(); return; }
-  renderLanding(p[0]);
+  // La presentación del producto y el inicio de sesión son los de toda la plataforma
+  if (SESION) { go('#/app/dashboard'); return; }
+  SIGEP.irAlLogin();
 }
 window.addEventListener('hashchange', route);
 function rerender() { const p = location.hash.replace(/^#\/?/, '').split('/'); if (p[0] === 'app' && S) renderApp(p[1] || 'dashboard', p[2]); }
@@ -237,7 +238,7 @@ function renderLanding(sec) {
       ['calendar', 'Creación y administración de periodos', 'Fechas, clave y semanas de cada periodo. Solo uno puede estar activo a la vez.'],
       ['shuffle', 'Asignación de asesores', 'Individual, masiva (varios alumnos a la vez) o automática equilibrando la carga. Nunca rebasa la capacidad del asesor.'],
       ['building', 'Gestión de empresas y contactos', 'RFC, giro, convenio con fecha de vencimiento y varios contactos por empresa, con uno principal.'],
-      ['folder', 'Estado general de expedientes', 'Avance de los 4 documentos del expediente digital (Módulo 1) de cada alumno, con filtros por documento y estado.'],
+      ['folder', 'Estado general de expedientes', 'Avance de los 4 documentos del expediente digital de cada alumno, con filtros por documento y estado.'],
       ['filter', 'Filtros y búsquedas avanzadas', 'Combina carrera, grupo, periodo, estado, asesor, empresa y expediente. Exporta el resultado a CSV.'],
       ['bar', 'Panel con estadísticas básicas', 'Alumnos sin asesor, carga de asesores, convenios vencidos y avance de documentación en un vistazo.'],
       ['shield', 'Gestión de usuarios y permisos', 'Usuarios con rol y una matriz de permisos editable. La base de datos valida cada acción.']
@@ -489,14 +490,13 @@ function renderApp(view) {
   renderApp._v = view;
   $('#root').innerHTML = `<div class="shell">
   <aside class="side ${UI.menu ? 'open' : ''}" id="side" aria-label="Menú">
-    <div class="side-head"><div class="logo"><span class="logo-mark">${ic('cap', 20)}</span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></div>
+    <div class="side-head"><a class="logo" href="#/app/dashboard"><span class="logo-mark">${ic('cap', 20)}</span><span><b>SIGEP</b><small>Gestión de Estadías</small></span></a>
       <button class="side-close" data-act="closeMenu" aria-label="Cerrar menú">${ic('x')}</button></div>
-    <div class="module-pill"><span class="n">2</span><span><small>Módulo 2</small>Administración</span></div>
+    <div class="module-pill"><span class="n">${ic('shield', 14)}</span><span><small>Tu espacio</small>Coordinación</span></div>
     <div class="side-label">GESTIÓN</div>
     <nav class="side-nav">${menu.map(([k, n, i, , c, alerta]) => `<a href="#/app/${k}" ${k === view ? 'aria-current="page"' : ''}>${ic(i)}${n}${c ? `<span class="count ${alerta ? 'alert' : ''}">${c}</span>` : ''}</a>`).join('')}</nav>
     <div class="side-foot">
       <div class="cycle-card"><small>PERIODO ACTIVO</small><b>${esc(p.nombre)}</b><div class="bar"><i style="width:${pct(sem.actual, sem.total)}%"></i></div><span class="mono">Semana ${sem.actual} de ${sem.total}</span></div>
-      <a class="side-link" href="../index.html">${ic('arrowL')}Portal SIGEP</a>
       <button class="side-out" data-act="logout">${ic('logout')}Cerrar sesión</button>
     </div>
   </aside>
@@ -504,7 +504,7 @@ function renderApp(view) {
   <div class="main">
     <header class="topbar">
       <button class="burger" data-act="openMenu" aria-label="Abrir menú">${ic('menu', 22)}</button>
-      <div class="crumb">SIGEP UTP / Módulo 2 / <b>${TITULOS[view]}</b></div>
+      <div class="crumb">SIGEP / <b>${TITULOS[view]}</b></div>
       ${navigator.onLine ? '' : `<a class="chip warn offline-chip" href="#/app/cache">${ic('alert', 13)}Sin conexión${UI.ca.fechaDatos ? ' · datos del ' + fechaHora(UI.ca.fechaDatos) : ''}</a>`}
       <div class="top-actions">
         <button class="icon-btn" data-act="pop" data-pop="notif" aria-label="Pendientes">${ic('bell', 20)}${al_.length ? `<span class="dot">${al_.length}</span>` : ''}</button>
@@ -549,7 +549,7 @@ function vDash() {
     </section>
     <section class="card"><div class="card-h"><h2>Avance de documentación</h2><span class="mono">${alumnos.length} alumnos</span></div>
       ${DOCS.map(([k, n]) => { const c = alumnos.filter((a) => a.expediente[k] === 'aprobado').length; return `<div class="bar-row"><div class="lbl">${n}<span>${pct(c, alumnos.length)}%</span></div><div class="bar"><i style="width:${pct(c, alumnos.length)}%"></i></div></div>`; }).join('')}
-      <p class="mono" style="margin-top:10px">Documentos aprobados. Se gestionan en el Módulo 1.</p>
+      <p class="mono" style="margin-top:10px">Documentos aprobados. Los sube el alumno en su expediente y los revisa su asesor.</p>
     </section>
   </div>
   <div class="cols">
@@ -636,7 +636,7 @@ function vAlumnos() {
     </div>`; }).join('') || '<div class="empty">Ningún alumno coincide con la búsqueda o los filtros.<br><button class="linkbtn" data-act="limpiarFiltros">Limpiar filtros</button></div>'}
     ${pager(l.length, f.page, pages, 'al')}
   </div>
-  <div class="legend" style="margin-top:12px"><span><i class="dots"><i class="aprobado"></i></i>Aprobado</span><span><i class="dots"><i class="cargado"></i></i>En revisión</span><span><i class="dots"><i class="rechazado"></i></i>Rechazado</span><span><i class="dots"><i></i></i>Pendiente</span><span class="mono">Aceptación · Seguro · Plan · Parcial · Liberación</span></div>`;
+  <div class="legend" style="margin-top:12px"><span><i class="dots"><i class="aprobado"></i></i>Aprobado</span><span><i class="dots"><i class="cargado"></i></i>En revisión</span><span><i class="dots"><i class="rechazado"></i></i>Requiere corrección</span><span><i class="dots"><i></i></i>Pendiente</span><span class="mono">Presentación · Aceptación · IMSS · INE</span></div>`;
 }
 function carreraComun(sel) { const c = [...sel].map((id) => al(id)?.carrera); return c.length && c.every((x) => x === c[0]) ? c[0] : ''; }
 function pager(total, page, pages, key) {
@@ -773,7 +773,7 @@ function vExpedientes() {
   const tot = { Completo: 0, 'En revisión': 0, 'Con rechazos': 0, 'En proceso': 0 };
   base.forEach((a) => tot[estExp(a)[0]]++);
   return `<div class="page-h"><div><h1>Expedientes</h1><p class="sub">Estado general · periodo ${esc(activo().nombre)}</p></div></div>
-  ${help('Consulta de solo lectura. La carga y revisión de los documentos se hace en el Módulo 1 (Expediente digital); aquí la coordinación ve el avance de todos.')}
+  ${help('Consulta de solo lectura. El alumno sube sus documentos en «Mi expediente» y su asesor los revisa; aquí la coordinación ve el avance de todos.')}
   <div class="stack">
   <div class="stats">${[['Completo', 'checkCircle'], ['En revisión', 'clock'], ['Con rechazos', 'alert'], ['En proceso', 'file']].map(([k, i]) => `<button class="stat link ${f.est === k && !f.doc ? 'on' : ''}" data-act="exEstado" data-e="${k}"><span class="ic-box">${ic(i, 16)}</span><b>${tot[k]}</b><span>${k}</span><span class="mono">${pct(tot[k], base.length)}% de ${base.length}</span></button>`).join('')}</div>
   <section class="card"><div class="card-h"><h2>Avance por documento</h2></div>
@@ -802,11 +802,11 @@ function vUsuarios() {
   const tabs = `<div class="tabs" role="tablist"><button role="tab" aria-selected="${tab === 'usuarios'}" data-act="tab" data-t="usuarios">Usuarios (${S.usuarios.length})</button><button role="tab" aria-selected="${tab === 'roles'}" data-act="tab" data-t="roles">Roles y permisos (${S.roles.length})</button></div>`;
   if (tab === 'roles') {
     const mods = [...new Set(PERMISOS.map((p) => p[1]))];
-    return `<div class="page-h"><div><h1>Usuarios y permisos</h1><p class="sub">Qué puede hacer cada rol en el módulo</p></div></div>${tabs}
+    return `<div class="page-h"><div><h1>Usuarios y permisos</h1><p class="sub">Qué puede hacer cada rol de coordinación</p></div></div>${tabs}
     ${help(editar ? 'Marca o desmarca un permiso y se guarda al momento. Editar incluye consultar. Los permisos del Administrador no se pueden cambiar.' : 'Consulta qué puede hacer cada rol. Solo el administrador puede modificar permisos.')}
     <div class="role-cards">${S.roles.map((r) => `<article class="card"><div class="card-h" style="margin-bottom:6px"><h2>${esc(r.nombre)}</h2><span class="chip">${plural(S.usuarios.filter((u) => u.rol_id === r.id).length, 'usuario')}</span></div><p class="muted small">${esc(r.descripcion)}</p><p class="mono" style="margin-top:8px">${r.permisos.length} de ${PERMISOS.length} permisos</p></article>`).join('')}</div>
     <div class="table matrix" style="--cols:1fr 1.6fr ${S.roles.map(() => '.75fr').join(' ')}">
-      <div class="trow head"><span>Módulo</span><span>Permiso</span>${S.roles.map((r) => `<span class="c">${esc(r.nombre.split(' ')[0])}</span>`).join('')}</div>
+      <div class="trow head"><span>Área</span><span>Permiso</span>${S.roles.map((r) => `<span class="c">${esc(r.nombre.split(' ')[0])}</span>`).join('')}</div>
       ${mods.map((m) => PERMISOS.filter((p) => p[1] === m).map(([k, , accion], i) => `<div class="trow"><span class="${i ? 'muted' : ''}"><b>${i ? '' : m}</b></span><span>${accion}<span class="mono" style="display:block">${k}</span></span>${S.roles.map((r) => `<span class="c"><input type="checkbox" class="ck" data-act="perm" data-r="${r.id}" data-p="${k}" ${r.permisos.includes(k) ? 'checked' : ''} ${!editar || r.sistema ? 'disabled' : ''} aria-label="${esc(r.nombre)}: ${accion} ${m}"></span>`).join('')}</div>`).join('')).join('')}
     </div>`;
   }
@@ -842,9 +842,9 @@ function vPerfil() {
 /* =====================================================================
    VISTA: Caché sin conexión (métodos de la API Cache desde la página)
    ===================================================================== */
-const CACHE_NOMBRES = { shell: 'sigep-m2-shell-v8', dinamica: 'sigep-m2-dinamica-v1', datos: M2.CACHE_DATOS };
+const CACHE_NOMBRES = { shell: 'sigep-m2-shell-v9', dinamica: 'sigep-m2-dinamica-v1', datos: M2.CACHE_DATOS };
 const CACHE_INFO = {
-  'sigep-m2-shell-v8': ['App Shell', 'Cache First', 'Archivos base del panel: HTML, CSS, JavaScript, manifiesto e íconos. Se guardan al instalar el Service Worker.'],
+  'sigep-m2-shell-v9': ['App Shell', 'Cache First', 'Archivos base del panel: HTML, CSS, JavaScript, manifiesto e íconos. Se guardan al instalar el Service Worker.'],
   'sigep-m2-dinamica-v1': ['Recursos dinámicos', 'Stale-While-Revalidate', 'Imágenes, video y tipografías. Responde con la copia guardada y la actualiza en segundo plano. Máximo 40 archivos.'],
   'sigep-m2-datos-v1': ['Datos del panel', 'Network First', 'Última copia de los datos leídos de Supabase (datos/estado.json) para consultar el panel sin conexión. Se borra al cerrar sesión.']
 };
@@ -1067,7 +1067,7 @@ function alDetalle(id) {
     <div><h3>Asesor y empresa</h3><dl class="kv"><dt>Asesor</dt><dd>${t ? `${esc(t.nombre)}<span class="mono" style="display:block">${TIPO_ASG[g.tipo]} · ${fmt(g.fecha)}</span>` : '<span class="chip warn">Sin asesor</span>'}</dd><dt>Empresa</dt><dd>${e ? `${esc(e.nombre)} ${chip(convEst(e))}` : '<span class="muted">Sin empresa</span>'}</dd>${pc ? `<dt>Contacto</dt><dd>${esc(pc.nombre)}<span class="mono" style="display:block">${esc(pc.telefono)} · ${esc(pc.email)}</span></dd>` : ''}</dl></div>
   </div>
   <div><h3 style="margin-bottom:8px">Expediente <span class="mono">${aprob(a)}/${DOCS.length} aprobados</span></h3><div class="rows">${DOCS.map(([k, n]) => `<div class="r"><div class="grow"><b>${n}</b></div>${chip(EST_DOC[a.expediente[k]])}</div>`).join('')}</div>
-  <p class="mono" style="margin-top:8px">Los documentos se suben y revisan en el Módulo 1.</p></div>
+  <p class="mono" style="margin-top:8px">El alumno los sube en «Mi expediente» y su asesor los revisa.</p></div>
   <div class="modal-f">${can('alumnos.editar') ? `<button class="btn out" data-act="alForm" data-id="${a.id}">${ic('edit', 15)}Editar</button>` : ''}<button class="btn" data-act="closeModal">Cerrar</button></div>`, 720);
 }
 function asForm(id) {
@@ -1216,7 +1216,7 @@ document.addEventListener('click', (e) => {
     case 'openMenu': UI.menu = true; $('#side').classList.add('open'); document.querySelector('.scrim').classList.add('show'); break;
     case 'closeMenu': UI.menu = false; $('#side').classList.remove('open'); document.querySelector('.scrim').classList.remove('show'); break;
     case 'pop': UI.pop = UI.pop === d.pop ? null : d.pop; rerender(); break;
-    case 'logout': M2.salir().catch(() => {}); cerrarSesion(); go('#/'); break;
+    case 'logout': M2.salir().catch(() => {}).finally(() => { cerrarSesion(); location.replace(SIGEP.rutas.login); }); break;
     case 'closeModal': closeModal(); break;
     case 'confirmarOk': { const fn = CONFIRMAR; CONFIRMAR = null; fn && fn(); break; }
     case 'ir': e.preventDefault(); UI.pop = null; if (d.f) { const [path, v] = d.f.split(':'); if (path.startsWith('al.')) { limpiarAl(); UI.al.estado = 'activo'; UI.al.filtros = true; } setFiltro(path, v); } closeModal(); if (location.hash === d.to) rerender(); else go(d.to); break;
@@ -1554,7 +1554,7 @@ M2.sesion()
   .then((p) => {
     SESION = p && !p.sinAcceso ? p : null;
     if (SESION) guardarTokenBD(true);
-    else if (p && p.sinAcceso && location.hash.startsWith('#/app')) { go('#/login'); setTimeout(() => toast('Esta cuenta no pertenece al personal de coordinación.'), 300); }
+    // Alumnos y asesores: el acceso único los lleva a su propio inicio
+    else if (p && p.sinAcceso) { location.replace(SIGEP.rutas.login); throw new Error('sin acceso'); }
   })
-  .catch(() => { SESION = null; })
-  .finally(() => { route(); setInterval(sincronizar, 8000); });
+  .then(() => { route(); setInterval(sincronizar, 8000); }, (e) => { if (!String(e && e.message).includes('sin acceso')) { SESION = null; route(); } });

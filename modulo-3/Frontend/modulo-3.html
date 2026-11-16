@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Alumnos asignados · Módulo 3 · SIGEP UTP</title>
+<title>Pre-auditoría · SIGEP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="../css/sigep.css">
 <link rel="stylesheet" href="../css/preauditoria.css">
-<link rel="manifest" href="../manifest.webmanifest">
+<link rel="manifest" href="../../manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="../img/icon-192.png">
 <meta name="theme-color" content="#0056b3">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,32 +16,30 @@
 <meta name="apple-mobile-web-app-title" content="SIGEP UTP">
 <link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png">
 </head>
-<body data-modulo="3" data-rol="asesor">
+<body data-rol="asesor">
 <div class="shell">
   <aside class="side">
-    <div class="side-head"><a class="logo" href="../../index.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
-    <div class="module-pill"><span class="n">3</span><span><small>Módulo 3</small>Seguimiento académico</span></div>
+    <div class="side-head"><a class="logo" href="../../modulo-4/asesor.html#alumnos"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP</b><small>Gestión de Estadías</small></span></a></div>
+    <div class="module-pill"><span class="n"><i data-ic="userCheck" data-s="14"></i></span><span><small>Tu espacio</small>Asesor</span></div>
     <div class="side-label">Menú</div>
-    <nav class="side-nav">
-        <a href="#alumnos" data-seccion="alumnos" aria-current="page"><i data-ic="users"></i>Alumnos asignados<span class="count" id="pa-nav-alumnos" hidden>0</span></a>
-        <a href="#preauditoria" data-seccion="preauditoria"><i data-ic="clipboard"></i>Revisión de documentos<span class="count alert" id="pa-nav-revisar" hidden>0</span></a>
-        <a href="#citas" data-seccion="citas"><i data-ic="calendar"></i>Citas de asesorías<span class="count" id="pa-nav-citas">0</span></a>
-    </nav>
-    <div class="side-label">Otros módulos</div>
-    <nav class="side-nav" aria-label="Otros módulos de SIGEP">
-        <a href="../../modulo-1/modulo-1.html#revisar"><i data-ic="folder"></i>Expedientes (Módulo 1)</a>
-        <a href="../../modulo-4/asesor.html#alumnos"><i data-ic="file"></i>Tesinas (Módulo 4)</a>
+    <nav class="side-nav" aria-label="Menú de SIGEP">
+      <a href="../../modulo-4/asesor.html#alumnos"><i data-ic="users"></i>Mis alumnos</a>
+      <a href="../../modulo-4/asesor.html#revisar"><i data-ic="file"></i>Tesinas por revisar</a>
+      <a href="../../modulo-1/modulo-1.html#revisar"><i data-ic="folder"></i>Expedientes</a>
+      <a href="#preauditoria" data-seccion="preauditoria"><i data-ic="clipboard"></i>Pre-auditoría<span class="count alert" id="pa-nav-revisar" hidden>0</span></a>
+      <a href="#alumnos" class="sub" data-seccion="alumnos"><i data-ic="bar"></i>Resumen de alumnos<span class="count" id="pa-nav-alumnos" hidden>0</span></a>
+      <a href="#citas" data-seccion="citas"><i data-ic="calendar"></i>Citas de asesoría<span class="count" id="pa-nav-citas">0</span></a>
+      <a href="../../modulo-4/asesor.html#perfil"><i data-ic="user"></i>Mi perfil</a>
     </nav>
     <div class="side-foot">
-      <a href="../../index.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
-      <button class="side-out"><i data-ic="logout"></i>Cerrar sesión</button>
+      <button class="side-out" type="button"><i data-ic="logout"></i>Cerrar sesión</button>
     </div>
   </aside>
   <div class="scrim"></div>
   <div class="main">
     <header class="topbar">
       <button class="burger" aria-label="Abrir menú"><i data-ic="menu"></i></button>
-      <div class="crumb">SIGEP UTP / Módulo 3 / <b id="crumb-seccion">Alumnos asignados</b></div>
+      <div class="crumb">SIGEP / <b id="crumb-seccion">Pre-auditoría</b></div>
       <div class="top-actions">
         <div class="notif-wrap">
           <button class="icon-btn" id="btn-notificaciones" type="button" aria-label="Notificaciones" aria-expanded="false" aria-controls="panel-notificaciones"><i data-ic="bell"></i><span class="dot" id="notif-badge" hidden>0</span></button>
@@ -208,7 +206,7 @@
           <label class="field"><span>Versión</span><select id="pa-dictado-version"></select></label>
           <label class="field"><span>Dictamen</span><select id="pa-dictado-dictamen">
             <option value="Aprobada">Pasa la versión</option>
-            <option value="Requiere Correcciones">Requiere correcciones</option>
+            <option value="Requiere corrección">Requiere corrección</option>
             <option value="No pasa">No pasa</option>
           </select></label>
         </div>
@@ -220,6 +218,7 @@
 </div>
 <script src="../../js/vendor/supabase.js"></script>
 <script src="../../js/config.js"></script>
+<script src="../../js/rutas.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/sigep.js"></script>
 <script src="../js/sync.js"></script>

@@ -300,7 +300,7 @@ const CRITERIOS = [
 ];
 // Criterios que no cumple una versión con correcciones (según su número)
 const FALTAN = { 1: ['marco', 'cronograma', 'referencias', 'conclusiones'], 2: ['referencias', 'conclusiones'], 3: ['formato'] };
-const ESTADO_M3 = { 'Aprobada': 'Aprobada', 'Requiere corrección': 'Requiere Correcciones', 'En revisión': 'Pendiente' };
+const ESTADO_M3 = { 'Aprobada': 'Aprobada', 'Requiere corrección': 'Requiere corrección', 'En revisión': 'En revisión' };
 const DIA = 86400000;
 let filasM3 = 0;
 
@@ -330,7 +330,7 @@ for (const correoAsesor of [ASESOR1, ASESOR2]) {
       }));
       const texto = obs.filter((o) => o.version_id === v.id).map((o) => o.texto).pop() || '';
       dictamenes.push({ id: v.id, alumno_id: alumno.id, version_id: v.id, version_numero: v.numero,
-        estado: ESTADO_M3[v.estado] || 'Pendiente', observacion: texto });
+        estado: ESTADO_M3[v.estado] || 'En revisión', observacion: texto });
       if (v.estado !== 'En revisión') notificaciones.push({
         id: Number(alumno.matricula) * 100 + v.numero, alumno_id: alumno.id, version_id: v.id,
         titulo: v.estado === 'Aprobada' ? `Tu versión ${v.numero} ha sido aprobada` : `Nueva observación disponible en V${v.numero}`,

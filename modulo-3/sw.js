@@ -6,7 +6,7 @@
    ===================================================================== */
 'use strict';
 
-const CACHE = 'sigep-preauditoria-v12';
+const CACHE = 'sigep-preauditoria-v13';
 const DB_NAME = 'sigep-preauditoria';
 const DB_VERSION = 4;
 const SYNC_TAG = 'sigep-sync-dictamenes';
@@ -34,6 +34,7 @@ const PRECACHE = [
   './img/apple-touch-icon.png',
   // Archivos compartidos de SIGEP (raíz del repositorio)
   '../js/config.js',
+  '../js/rutas.js',
   '../js/vendor/supabase.js',
   '../js/vendor/pdfjs/pdf.min.mjs',
   '../js/vendor/pdfjs/pdf.worker.min.mjs'
@@ -325,7 +326,7 @@ function textoNotificacion(version, alumno) {
       cuerpo: `Revisa las observaciones de tu asesor en la ${etiqueta} antes de continuar.`
     };
   }
-  if (version.estado === 'Requiere Correcciones') {
+  if (version.estado === 'Requiere corrección' || version.estado === 'Requiere Correcciones') {
     return {
       titulo: `Nueva observación disponible en V${numero}`,
       cuerpo: `Revisa las observaciones de tu asesor en la ${etiqueta}.`

@@ -1,0 +1,32 @@
+{
+  "id": "./",
+  "name": "SIGEP · Gestión de Estadías",
+  "short_name": "SIGEP",
+  "description": "Una sola plataforma para la estadía profesional: expediente digital, tesina por versiones, pre-auditoría, asignación de asesores y seguimiento de riesgo.",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "start_url": "./login.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F4F6FB",
+  "theme_color": "#13213F",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Mi tesina", "short_name": "Tesina", "url": "./modulo-4/alumno.html#tesina",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Mi expediente", "short_name": "Expediente", "url": "./modulo-1/modulo-1.html#documentos",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Mis alumnos (asesor)", "short_name": "Mis alumnos", "url": "./modulo-4/asesor.html#alumnos",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Radar de estadías (coordinación)", "short_name": "Radar", "url": "./modulo-2/index.html#/app/radar",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

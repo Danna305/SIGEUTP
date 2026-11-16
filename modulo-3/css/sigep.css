@@ -113,6 +113,10 @@ svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-widt
 .side-nav{display:grid;gap:2px}
 .side-nav a{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--r-sm);text-decoration:none;color:var(--side-text);font-size:.9rem}
 .side-nav a:hover{background:var(--side-hover)}
+/* Subsecciones del menú (por ejemplo, las vistas de «Mi expediente») */
+.side-nav a.sub{padding:6px 10px 6px 38px;font-size:.84rem;color:var(--side-muted)}
+.side-nav a.sub svg.i{width:15px;height:15px}
+.side-nav a.sub[aria-current="page"],.side-nav a.sub.active{color:#fff}
 .side-nav a[aria-current="page"]{background:var(--side-hover);color:#fff;font-weight:600}
 .side-nav a[aria-current="page"] svg.i{color:var(--acento)}
 .side-nav .count{margin-left:auto;font-size:.7rem;background:var(--side-hover);border:1px solid var(--side-line);color:var(--side-muted);border-radius:6px;padding:0 6px;font-family:var(--mono)}

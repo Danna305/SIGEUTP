@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Portal del alumno · SIGEP UTP</title>
+  <title>Alumno · SIGEP</title>
   <meta name="description" content="Portal del alumno: estado de tu estadía y tu tesina con todas sus versiones.">
   <meta name="color-scheme" content="light dark">
 
   <!-- Aplicación web progresiva -->
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#13213F">
   <meta name="apple-mobile-web-app-title" content="Estadías">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -26,6 +26,7 @@
   <script src="js/sigep.js" defer></script>
   <script src="../js/vendor/supabase.js" defer></script>
   <script src="../js/config.js" defer></script>
+  <script src="../js/rutas.js" defer></script>
   <script src="js/toast.js" defer></script>
   <script src="js/cache-api.js" defer></script>
   <script src="js/cola.js" defer></script>
@@ -38,31 +39,28 @@
   <script src="js/comparar.js" defer></script>
   <script src="js/visor.js" defer></script>
   <script src="js/voz.js" defer></script>
+  <script src="js/estadia.js" defer></script>
   <script src="js/alumno.js" defer></script>
   <script src="js/pwa.js" defer></script>
 </head>
-<!-- data-modulo="4": color de acento del Módulo 4 (ámbar) -->
-<body data-modulo="4">
+<body>
 <a class="skip" href="#contenido">Saltar al contenido</a>
 
 <div class="shell">
   <!-- ================= MENÚ LATERAL ================= -->
   <aside class="side">
-    <div class="side-head"><a class="logo" href="#inicio"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
-    <div class="module-pill"><span class="n">4</span><span><small>Módulo 4</small>Portal del alumno</span></div>
+    <div class="side-head"><a class="logo" href="#inicio"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP</b><small>Gestión de Estadías</small></span></a></div>
+    <div class="module-pill"><span class="n"><i data-ic="cap" data-s="14"></i></span><span><small>Tu espacio</small>Alumno</span></div>
     <div class="side-label">Menú</div>
-    <nav class="side-nav" aria-label="Menú del alumno">
+    <nav class="side-nav" aria-label="Menú de SIGEP">
       <a href="#inicio"><i data-ic="home"></i>Inicio</a>
       <a href="#tesina"><i data-ic="file"></i>Mi tesina<span class="count" id="cuenta-versiones" hidden></span></a>
+      <a href="../modulo-1/modulo-1.html#documentos"><i data-ic="folder"></i>Mi expediente</a>
+      <a href="../modulo-3/Frontend/alumno.html"><i data-ic="clipboard"></i>Pre-auditoría</a>
       <a href="#asesor"><i data-ic="userCheck"></i>Mi asesor</a>
-      <a href="../modulo-1/modulo-1.html"><i data-ic="folder"></i>Mis documentos<span class="count">M1</span></a>
-      <a href="../modulo-3/Frontend/alumno.html"><i data-ic="clipboard"></i>Pre-auditoría<span class="count">M3</span></a>
-      <a href="#" class="pronto" data-nombre="Mi empresa"><i data-ic="building"></i>Mi empresa<span class="count">Pronto</span></a>
-      <a href="#" class="pronto" data-nombre="Avisos"><i data-ic="bell"></i>Avisos<span class="count">Pronto</span></a>
       <a href="#perfil"><i data-ic="user"></i>Mi perfil</a>
     </nav>
     <div class="side-foot">
-      <a href="../index.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
       <button class="side-out" type="button"><i data-ic="logout"></i>Cerrar sesión</button>
     </div>
   </aside>
@@ -72,7 +70,7 @@
     <!-- ================= BARRA SUPERIOR ================= -->
     <header class="topbar">
       <button class="burger" type="button" aria-label="Abrir menú"><i data-ic="menu"></i></button>
-      <div class="crumb">SIGEP UTP / Módulo 4 / <b id="crumb-actual">Inicio</b></div>
+      <div class="crumb">SIGEP / <b id="crumb-actual">Inicio</b></div>
       <div class="top-actions">
         <span class="chip warn estado-red" id="estado-red">Sin conexión</span>
         <a class="icon-btn" href="#tesina" aria-label="Observaciones de mi tesina" title="Observaciones de mi tesina"><i data-ic="bell"></i></a>
@@ -90,6 +88,10 @@
         </div>
         <p class="help warn" id="aviso-cache" hidden></p>
         <div class="stats" id="inicio-stats"></div>
+        <div class="card estadia-card">
+          <div class="card-h"><h2>Mi estadía de un vistazo</h2><span class="chip info">Todo en un solo lugar</span></div>
+          <div class="estadia-pasos" id="estadia-resumen"><p class="empty">Cargando tu estadía…</p></div>
+        </div>
         <div class="cols">
           <div class="card"><div class="card-h"><h2>Acciones pendientes</h2><span class="chip mod" id="cuenta-pendientes">0</span></div>
             <div class="rows" id="inicio-pendientes"></div>
@@ -97,6 +99,10 @@
           <div class="card"><div class="card-h"><h2>Última versión de tu tesina</h2><a class="btn out sm" href="#tesina">Ver historial</a></div>
             <div id="inicio-ultima"></div>
           </div>
+        </div>
+        <div class="card estadia-card">
+          <div class="card-h"><h2>Trazabilidad de mi estadía</h2><span class="mono">Cada paso, con su fecha y quién lo hizo</span></div>
+          <div id="estadia-traza"><p class="empty">Cargando…</p></div>
         </div>
       </section>
 

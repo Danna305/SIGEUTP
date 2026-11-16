@@ -13,7 +13,8 @@
   'use strict';
 
   const { auth, toast } = window.App;
-  const DESTINO = { alumno: 'alumno.html', asesor: 'asesor.html' };
+  // Cada rol entra a su propio inicio (js/rutas.js)
+  const DESTINO = { alumno: SIGEP.rutas.alumno, asesor: SIGEP.rutas.asesor, coordinacion: SIGEP.rutas.coordinacion };
   const PREFIJO = { 'panel-login': 'login', 'panel-registro': 'reg', 'panel-recuperar': 'rec', 'panel-nueva': 'nueva' };
 
   const tabs = { login: document.getElementById('tab-login'), registro: document.getElementById('tab-registro') };
@@ -118,7 +119,7 @@
   async function irAlPanel(rol) {
     if (DESTINO[rol]) { location.replace(DESTINO[rol]); return; }
     await auth.cerrarSesion();
-    throw new Error('Tu cuenta no tiene un perfil de alumno ni de asesor. Contacta a la coordinación de estadías.');
+    throw new Error('Tu cuenta no tiene un perfil de alumno, asesor ni coordinación. Contacta a la coordinación de estadías.');
   }
 
   /* ---------- 3. Inicio de sesión ---------- */

@@ -16,7 +16,9 @@
 (() => {
   'use strict';
 
-  const CLAVE = 'sigep_sesion'; // copia local del perfil (para trabajar sin conexión)
+  const CLAVE = 'sigep_sesion';
+  // Carpeta de la pre-auditoría (modulo-3/), a partir de la ubicación de este archivo
+  const CARPETA = new URL('../', document.currentScript ? document.currentScript.src : location.href); // copia local del perfil (para trabajar sin conexión)
   const config = (window.App && window.App.config) || {};
   const storageKey = config.storageKey || 'estadias-sesion';
 
@@ -68,11 +70,12 @@
   }
 
   function raiz() {
-    const manifest = document.querySelector('link[rel="manifest"]');
-    return manifest ? new URL('./', manifest.href) : new URL('../', document.baseURI);
+    return CARPETA;
   }
 
+  // Acceso único de SIGEP (login.html en la raíz, ver js/rutas.js)
   function irAlLogin(motivo) {
+    if (window.SIGEP) { SIGEP.irAlLogin(motivo); return; }
     const destino = new URL('Frontend/login.html', raiz());
     if (motivo) destino.searchParams.set('motivo', motivo);
     location.replace(destino.href);

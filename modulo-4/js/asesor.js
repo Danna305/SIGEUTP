@@ -88,7 +88,10 @@
     }
     $('t-alumno').textContent = alumno.nombre;
     $('alumno-sub').textContent = `Matrícula ${alumno.matricula} · ${alumno.nivel} · ${alumno.correo}`;
-    document.title = `${alumno.nombre} · Revisión de tesinas · SIGEP UTP`;
+    document.title = `${alumno.nombre} · SIGEP`;
+    // Trazabilidad completa del alumno (una vez por alumno abierto)
+    const traza = $('alumno-traza');
+    if (traza.dataset.alumno !== alumno.id) { traza.dataset.alumno = alumno.id; App.estadia.trazaAlumno(alumno.id, traza); }
 
     // Lo que el asesor ya escribió no se pierde al volver a dibujar
     const lista = $('alumno-versiones');
@@ -175,7 +178,7 @@
   async function actualizar({ avisar = false } = {}) {
     try {
       const [perfil, alumnos] = await Promise.all([auth.obtenerPerfilAsesor(), tesina.misAlumnos()]);
-      if (!perfil) { await auth.cerrarSesion(); location.replace('portal.html'); return; }
+      if (!perfil) { await auth.cerrarSesion(); location.replace(SIGEP.rutas.login); return; }
       Object.assign(estado, { perfil, alumnos, origen: 'red', guardadoEn: perfil.guardadoEn });
       if (avisar) toast.show('Datos actualizados y guardados en la caché.');
     } catch (error) {
@@ -184,6 +187,7 @@
       else if (avisar) toast.show(error.message);
     }
     pintarTodo();
+    App.estadia.asesor($('asesor-pendientes')).catch(() => {});
   }
 
   /* ==========================================================================

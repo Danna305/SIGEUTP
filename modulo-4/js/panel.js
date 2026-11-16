@@ -212,11 +212,11 @@ App.panel = (() => {
   const tituloBase = document.title;
   let alCambiar = () => {};
 
-  const DESTINO = { alumno: 'alumno.html', asesor: 'asesor.html' };
+  const DESTINO = { alumno: SIGEP.rutas.alumno, asesor: SIGEP.rutas.asesor, coordinacion: SIGEP.rutas.coordinacion };
 
   /* ---------- Sesión y rol ---------- */
   async function exigirSesion(rolEsperado) {
-    if (!auth.configurado) { location.replace('portal.html'); return false; }
+    if (!auth.configurado) { location.replace(SIGEP.rutas.login); return false; }
 
     let rol = null;
     try {
@@ -228,7 +228,7 @@ App.panel = (() => {
     if (!rol && !navigator.onLine) rol = (await cacheApi.leer('rol').catch(() => null))?.datos?.rol || null;
 
     if (rol === rolEsperado) return true;
-    location.replace(DESTINO[rol] || 'portal.html');
+    location.replace(DESTINO[rol] || SIGEP.rutas.login);
     return false;
   }
 
@@ -280,7 +280,7 @@ App.panel = (() => {
     if (pendientes && !confirm(`Tienes ${pendientes === 1 ? 'una entrega' : `${pendientes} entregas`} sin enviar. `
       + 'Si cierras sesión se borrarán de este dispositivo. ¿Cerrar sesión de todos modos?')) return;
     await auth.cerrarSesion();
-    location.replace('portal.html');
+    location.replace(SIGEP.rutas.login);
   });
 
   /* ---------- Estado de la conexión ---------- */

@@ -118,13 +118,16 @@ App.auth = (() => {
     const id = await usuarioId();
     if (!id) return null;
 
-    const [asesor, alumno] = await Promise.all([
+    // Mismo acceso para todos: alumno, asesor o personal de coordinación
+    const [asesor, alumno, personal] = await Promise.all([
       cliente.from('asesores').select('id').eq('id', id).maybeSingle(),
       cliente.from('alumnos').select('id').eq('id', id).maybeSingle(),
+      cliente.from('personal_admin').select('id, activo').eq('id', id).maybeSingle(),
     ]);
     if (asesor.error && alumno.error) throw error(asesor.error);
 
-    const resultado = asesor.data ? 'asesor' : alumno.data ? 'alumno' : 'sin-rol';
+    const resultado = asesor.data ? 'asesor' : alumno.data ? 'alumno'
+      : personal.data?.activo ? 'coordinacion' : 'sin-rol';
     try { await cacheApi.guardar('rol', { rol: resultado }); } catch { /* caché no disponible */ }
     return resultado;
   }
@@ -256,8 +259,8 @@ App.auth = (() => {
 
   async function recuperarContrasena(correo) {
     exigirConexion();
-    // Al abrir el enlace del correo, Supabase regresa a portal.html con la sesión de recuperación
-    const destino = new URL('portal.html?recuperar=1', location.href).href;
+    // Al abrir el enlace del correo, Supabase regresa al acceso único con la sesión de recuperación
+    const destino = new URL('?recuperar=1', window.SIGEP ? SIGEP.rutas.login : new URL('portal.html', location.href)).href;
     const { error: e } = await cliente.auth.resetPasswordForEmail(correo, { redirectTo: destino });
     if (e) throw error(e);
   }

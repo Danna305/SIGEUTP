@@ -1108,3 +1108,34 @@ fieldset.field legend { padding: 0; margin-bottom: 6px; }
   .cmp-solo,
   .pre-ver summary { min-height: 44px; }
 }
+
+/* ==========================================================================
+   Inicio integrado: la estadía completa y su trazabilidad (js/estadia.js)
+   ========================================================================== */
+.estadia-card { margin-bottom: 16px; }
+.estadia-titulo { font-size: .95rem; margin: 6px 0 10px; color: var(--muted); font-weight: 600; }
+.estadia-pasos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.estadia-paso { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--surface); color: var(--text); text-decoration: none; min-height: 64px; }
+.estadia-paso:hover { border-color: var(--primary); background: var(--primary-soft); }
+.estadia-paso .ic-box { margin: 0; flex: none; }
+.estadia-paso .grow { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.estadia-paso small { color: var(--muted); font-size: .8rem; }
+.estadia-paso .chip { flex: none; }
+.estadia-barra { position: relative; display: block; height: 6px; margin-top: 6px; border-radius: 4px; background: var(--soft); overflow: hidden; }
+.estadia-barra i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--primary); opacity: .45; }
+.estadia-barra i.ok { background: var(--ok); opacity: 1; }
+a.estadia-stat { text-decoration: none; color: var(--text); }
+a.estadia-stat:hover { border-color: var(--primary); }
+a.estadia-stat.alerta b { color: var(--warn); }
+.traza { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.traza-item { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 0 10px 4px; border-top: 1px solid var(--line); }
+.traza-item:first-child { border-top: 0; }
+.traza-item .ic-box { margin: 0; flex: none; }
+.traza-item .btn { flex: none; }
+.traza-item .grow { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.traza-item small { color: var(--muted); font-size: .78rem; }
+.traza-item small .chip { font-size: .68rem; padding: 1px 7px; margin-right: 4px; }
+.traza-item.futura b { color: var(--primary); }
+.traza + .btn { margin-top: 10px; }
+@media (max-width: 700px) { .estadia-pasos { grid-template-columns: 1fr; } }

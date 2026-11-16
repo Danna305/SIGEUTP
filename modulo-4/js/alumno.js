@@ -21,7 +21,7 @@
 
   if (!(await panel.exigirSesion('alumno'))) return;
 
-  const estado = { perfil: null, versiones: [], asesor: null, origen: 'cache', guardadoEn: null, pendientes: [] };
+  const estado = { perfil: null, versiones: [], asesor: null, origen: 'cache', guardadoEn: null, pendientes: [], estadia: null };
 
   /* ==========================================================================
      Dibujo de cada vista
@@ -59,6 +59,16 @@
     }
     if (!asesor) {
       pendientes.push(['userCheck', 'Aún no tienes asesor asignado', 'La coordinación de estadías te asignará uno', '#asesor', 'Ver']);
+    }
+    // Expediente (documentos de la estadía): lo que falta o hay que corregir
+    const ex = estado.estadia;
+    if (ex && ex.correccion) {
+      pendientes.push(['alert', `Corrige ${ex.correccion === 1 ? 'un documento' : `${ex.correccion} documentos`} de tu expediente`,
+        'Tu asesor dejó un comentario con lo que hay que cambiar', SIGEP.url('modulo-1/modulo-1.html#observaciones'), 'Ver']);
+    }
+    if (ex && ex.subidos < ex.total) {
+      pendientes.push(['folder', `Sube los documentos que faltan en tu expediente (${ex.subidos} de ${ex.total})`,
+        'PDF de hasta 5 MB', SIGEP.url('modulo-1/modulo-1.html#documentos'), 'Subir']);
     }
     $('cuenta-pendientes').textContent = String(pendientes.length);
     ui.pintar($('inicio-pendientes'), pendientes.length
@@ -182,7 +192,7 @@
       const [perfil, versiones, asesor] = await Promise.all([auth.obtenerPerfil(), tesina.misVersiones(), tesina.miAsesor()]);
       if (!perfil) {
         await auth.cerrarSesion();
-        location.replace('portal.html');
+        location.replace(SIGEP.rutas.login);
         return;
       }
       Object.assign(estado, { perfil, versiones, asesor, origen: 'red', guardadoEn: perfil.guardadoEn });
@@ -198,6 +208,11 @@
     }
     await cargarPendientes();
     pintarTodo();
+    // La estadía completa (expediente, tesina, pre-auditoría y citas) en el inicio
+    App.estadia.alumno({
+      resumen: $('estadia-resumen'), traza: $('estadia-traza'),
+      pendientes: (r) => { estado.estadia = r; pintarInicio(); },
+    }).catch(() => {});
   }
 
   // Tiempo real: lo que hace el asesor aparece al instante, sin recargar.

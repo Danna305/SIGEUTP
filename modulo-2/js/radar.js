@@ -20,7 +20,7 @@
     ['documentos', 'Documentos atrasados según la semana'],
     ['asesor', 'Sin asesor asignado'],
     ['empresa', 'Empresa y convenio'],
-    ['correcciones', 'Documentos rechazados'],
+    ['correcciones', 'Documentos con corrección pendiente'],
     ['carga', 'Carga del asesor']
   ];
   // Semana del periodo en la que cada documento ya debería estar aprobado
@@ -77,7 +77,7 @@
       else if (dias(hoy, e.vence) <= 45) { f.empresa = 12; motivos.push({ t: `Convenio vence en ${dias(hoy, e.vence)} días`, n: 'medio' }); }
       // 4. Correcciones pendientes
       const rech = Object.values(exp).filter((v) => v === 'rechazado').length;
-      if (rech) { f.correcciones = Math.min(PESOS.correcciones, rech * 6); motivos.push({ t: rech === 1 ? 'Documento rechazado' : `${rech} documentos rechazados`, n: 'alto' }); }
+      if (rech) { f.correcciones = Math.min(PESOS.correcciones, rech * 6); motivos.push({ t: rech === 1 ? 'Documento con corrección pendiente' : `${rech} documentos con corrección pendiente`, n: 'alto' }); }
       // 5. Carga del asesor
       if (t && t.activo) {
         const uso = (carga.get(t.id) || 0) / t.capacidad;

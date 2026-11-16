@@ -28,7 +28,7 @@ create table if not exists public.dictamenes (
   alumno_id       text not null,
   version_id      text not null,
   version_numero  integer,
-  estado          text not null default 'Pendiente',
+  estado          text not null default 'En revisión',
   observacion     text,
   actualizado     timestamptz not null default now()
 );
@@ -67,6 +67,11 @@ create table if not exists public.citas (
 );
 
 create index if not exists dictamenes_alumno_idx on public.dictamenes (alumno_id);
+
+-- Mismos nombres de estado que la tesina en toda la plataforma
+alter table public.dictamenes alter column estado set default 'En revisión';
+update public.dictamenes set estado = 'En revisión' where estado = 'Pendiente';
+update public.dictamenes set estado = 'Requiere corrección' where estado = 'Requiere Correcciones';
 create index if not exists evaluaciones_alumno_idx on public.evaluaciones_checklist (alumno_id);
 create index if not exists evaluaciones_version_idx on public.evaluaciones_checklist (version_id);
 create index if not exists notificaciones_alumno_idx on public.notificaciones (alumno_id);

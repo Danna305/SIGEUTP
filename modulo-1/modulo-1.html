@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Expediente digital · Módulo 1 · SIGEP UTP</title>
-<meta name="description" content="Módulo 1 del SIGEP UTP: expediente digital y gestión de los documentos de la estadía.">
-<link rel="manifest" href="manifest.json">
+<title>Mi expediente · SIGEP</title>
+<meta name="description" content="SIGEP: expediente digital y gestión de los documentos de la estadía.">
+<link rel="manifest" href="../manifest.webmanifest">
 <meta name="theme-color" content="#13213F">
 <link rel="icon" href="img/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="img/icon-192.png">
@@ -20,11 +20,11 @@
     /* Barra de avance con porcentaje */
     .bar-custom { position: relative; height: 12px; background: var(--soft); border-radius: 6px; overflow: hidden; margin-top: 8px; }
     .bar-custom > i { position: absolute; left: 0; top: 0; display: block; height: 100%; border-radius: 6px; transition: width 0.5s ease; }
-    .bar-custom > .subidos { background: var(--m1); opacity: .45; }   /* subidos (cualquier estado) */
+    .bar-custom > .subidos { background: var(--primary); opacity: .45; }   /* subidos (cualquier estado) */
     .bar-custom > .aprobados { background: var(--ok); }               /* de esos, los aprobados */
     .bar-leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: .78rem; color: var(--muted); }
     .bar-leyenda span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
-    .bar-leyenda .l-subidos::before { background: var(--m1); opacity: .45; }
+    .bar-leyenda .l-subidos::before { background: var(--primary); opacity: .45; }
     .bar-leyenda .l-aprobados::before { background: var(--ok); }
     .porcentaje-texto { font-size: 1.5rem; font-weight: 800; color: var(--ok); }
 
@@ -46,35 +46,34 @@
     @media (pointer: coarse) { .btn { min-height: 44px; } input, select, textarea { font-size: 16px; } }
 </style>
 </head>
-<body data-modulo="1">
+<body>
 <div class="shell">
   <aside class="side">
-    <div class="side-head"><a class="logo" href="../index.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP UTP</b><small>Gestión de Estadías</small></span></a></div>
-    <div class="module-pill"><span class="n">1</span><span><small>Módulo 1</small>Expediente digital</span></div>
+    <div class="side-head"><a class="logo" href="../login.html"><span class="logo-mark"><i data-ic="cap" data-s="20"></i></span><span><b>SIGEP</b><small>Gestión de Estadías</small></span></a></div>
+    <div class="module-pill" data-solo="alumno"><span class="n"><i data-ic="cap" data-s="14"></i></span><span><small>Tu espacio</small>Alumno</span></div>
+    <div class="module-pill" data-solo="asesor" hidden><span class="n"><i data-ic="userCheck" data-s="14"></i></span><span><small>Tu espacio</small>Asesor</span></div>
     <div class="side-label">Menú</div>
-
-    <nav class="side-nav">
-        <!-- Alumno -->
-        <a href="#" class="nav-link active" data-solo="alumno" data-vista="documentos"><i data-ic="folder"></i>Mis documentos</a>
-        <a href="#" class="nav-link" data-solo="alumno" data-accion="subir"><i data-ic="upload"></i>Subir documento</a>
-        <!-- Asesor -->
-        <a href="#" class="nav-link" data-solo="asesor" data-vista="revisar" hidden><i data-ic="clipboard"></i>Revisar documentos<span class="count alert" id="cuenta-revisar" hidden></span></a>
-        <!-- Ambos -->
-        <a href="#" class="nav-link" data-vista="observaciones"><i data-ic="message"></i>Observaciones</a>
-        <a href="#" class="nav-link" data-vista="historial"><i data-ic="history"></i>Historial de versiones</a>
-        <a href="#" class="nav-link" data-solo="alumno" data-vista="avance"><i data-ic="bar"></i>Avance del expediente</a>
+    <nav class="side-nav" aria-label="Menú de SIGEP">
+      <a href="../modulo-4/alumno.html#inicio" data-solo="alumno"><i data-ic="home"></i>Inicio</a>
+      <a href="../modulo-4/alumno.html#tesina" data-solo="alumno"><i data-ic="file"></i>Mi tesina</a>
+      <a href="#" class="nav-link active" data-vista="documentos" data-solo="alumno"><i data-ic="folder"></i>Mi expediente</a>
+      <a href="#" class="sub nav-link" data-accion="subir" data-solo="alumno"><i data-ic="upload"></i>Subir documento</a>
+      <a href="#" class="sub nav-link" data-vista="observaciones" data-solo="alumno"><i data-ic="message"></i>Observaciones</a>
+      <a href="#" class="sub nav-link" data-vista="historial" data-solo="alumno"><i data-ic="history"></i>Historial</a>
+      <a href="#" class="sub nav-link" data-vista="avance" data-solo="alumno"><i data-ic="bar"></i>Avance</a>
+      <a href="../modulo-3/Frontend/alumno.html" data-solo="alumno"><i data-ic="clipboard"></i>Pre-auditoría</a>
+      <a href="../modulo-4/alumno.html#asesor" data-solo="alumno"><i data-ic="userCheck"></i>Mi asesor</a>
+      <a href="../modulo-4/alumno.html#perfil" data-solo="alumno"><i data-ic="user"></i>Mi perfil</a>
+      <a href="../modulo-4/asesor.html#alumnos" data-solo="asesor" hidden><i data-ic="users"></i>Mis alumnos</a>
+      <a href="../modulo-4/asesor.html#revisar" data-solo="asesor" hidden><i data-ic="file"></i>Tesinas por revisar</a>
+      <a href="#" class="nav-link" data-vista="revisar" data-solo="asesor" hidden><i data-ic="folder"></i>Expedientes<span class="count alert" id="cuenta-revisar" hidden></span></a>
+      <a href="#" class="sub nav-link" data-vista="observaciones" data-solo="asesor" hidden><i data-ic="message"></i>Observaciones</a>
+      <a href="#" class="sub nav-link" data-vista="historial" data-solo="asesor" hidden><i data-ic="history"></i>Historial</a>
+      <a href="../modulo-3/Frontend/modulo-3.html#preauditoria" data-solo="asesor" hidden><i data-ic="clipboard"></i>Pre-auditoría</a>
+      <a href="../modulo-3/Frontend/modulo-3.html#citas" data-solo="asesor" hidden><i data-ic="calendar"></i>Citas de asesoría</a>
+      <a href="../modulo-4/asesor.html#perfil" data-solo="asesor" hidden><i data-ic="user"></i>Mi perfil</a>
     </nav>
-
-    <div class="side-label">Otros módulos</div>
-    <nav class="side-nav" aria-label="Otros módulos de SIGEP">
-        <a href="../modulo-4/alumno.html#tesina" data-solo="alumno"><i data-ic="file"></i>Mi tesina (Módulo 4)</a>
-        <a href="../modulo-3/Frontend/alumno.html" data-solo="alumno"><i data-ic="clipboard"></i>Pre-auditoría (Módulo 3)</a>
-        <a href="../modulo-4/asesor.html#alumnos" data-solo="asesor" hidden><i data-ic="file"></i>Tesinas (Módulo 4)</a>
-        <a href="../modulo-3/Frontend/modulo-3.html#preauditoria" data-solo="asesor" hidden><i data-ic="clipboard"></i>Pre-auditoría (Módulo 3)</a>
-    </nav>
-
     <div class="side-foot">
-      <a href="../index.html"><i data-ic="arrowL"></i>Portal SIGEP</a>
       <button class="side-out" type="button" data-cerrar-sesion><i data-ic="logout"></i>Cerrar sesión</button>
     </div>
   </aside>
@@ -83,7 +82,7 @@
   <div class="main">
     <header class="topbar">
       <button class="burger" aria-label="Abrir menú"><i data-ic="menu"></i></button>
-      <div class="crumb">SIGEP UTP / Módulo 1 / <b id="crumb-text">Mis documentos</b></div>
+      <div class="crumb">SIGEP / <b id="crumb-text">Mi expediente</b></div>
       <div class="top-actions">
         <button class="icon-btn" type="button" aria-label="Activar notificaciones" id="btn-notificaciones" title="Activar notificaciones push"><i data-ic="bell"></i></button>
         <span class="avatar" id="avatar" title="Usuario">··</span>
@@ -96,7 +95,7 @@
       <!-- ================= VISTA: DOCUMENTOS (alumno) ================= -->
       <div id="view-documentos" class="dashboard-view active">
           <div class="page-h">
-            <div><h1>Mis documentos</h1><p class="sub" id="sub-expediente">Cargando tu expediente…</p></div>
+            <div><h1>Mi expediente</h1><p class="sub" id="sub-expediente">Cargando tu expediente…</p></div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn out" type="button" data-activar-push><i data-ic="bell"></i>Activar notificaciones</button>
                 <button class="btn" type="button" data-accion="subir"><i data-ic="upload"></i>Subir documento</button>
@@ -143,7 +142,7 @@
       <!-- ================= VISTA: REVISAR (asesor) ================= -->
       <div id="view-revisar" class="dashboard-view">
           <div class="page-h">
-            <div><h1>Revisar documentos</h1><p class="sub" id="sub-revisar">Documentos de tus alumnos asignados.</p></div>
+            <div><h1>Expedientes por revisar</h1><p class="sub" id="sub-revisar">Documentos de tus alumnos asignados.</p></div>
             <button class="btn out" type="button" data-activar-push><i data-ic="bell"></i>Activar notificaciones</button>
           </div>
           <div class="stats">
@@ -248,6 +247,7 @@
 
 <script src="../js/vendor/supabase.js"></script>
 <script src="../js/config.js"></script>
+<script src="../js/rutas.js"></script>
 <script src="../js/sigep.js"></script>
 <script src="js/expediente.js"></script>
 <script src="js/instalar.js"></script>
